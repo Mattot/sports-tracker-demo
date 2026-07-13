@@ -33,3 +33,23 @@ enum Sample {
         SportRecord(id: id, name: name, location: location, duration: duration, storageType: storage, createdAt: createdAt)
     }
 }
+
+/// Configurable fake data source usable for both local and remote roles.
+final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSource, @unchecked Sendable {
+    var records: [SportRecord] = []
+    var fetchError: Error?
+    var deleteError: Error?
+    private(set) var deletedIds: [[UUID]] = []
+
+    func fetch() async throws -> [SportRecord] {
+        if let fetchError { throw fetchError }
+        return records
+    }
+
+    func delete(ids: [UUID]) async throws {
+        deletedIds.append(ids)
+        if let deleteError { throw deleteError }
+    }
+}
+
+struct AnyError: Error {}
