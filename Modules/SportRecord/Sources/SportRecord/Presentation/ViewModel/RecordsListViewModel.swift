@@ -140,8 +140,9 @@ public final class RecordsListViewModel {
 
     private func observeNetwork() {
         monitorTask = Task { [weak self] in
-            guard let self else { return }
-            for await online in networkMonitor.updates {
+            guard let stream = self?.networkMonitor.updates else { return }
+            for await online in stream {
+                guard let self else { return }
                 self.isOffline = !online
             }
         }

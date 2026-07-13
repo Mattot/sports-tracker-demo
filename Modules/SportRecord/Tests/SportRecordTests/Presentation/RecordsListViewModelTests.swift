@@ -151,3 +151,26 @@ private func makeSUT(
     #expect(sut.selection == [a.id, b.id])
     #expect(sut.isEditing)
 }
+
+// MARK: network observation / lifecycle
+
+@Test @MainActor func offlineFlipsWhenMonitorGoesOffline() async {
+    let (sut, _, _, monitor) = makeSUT(isOnline: true)
+    #expect(sut.isOffline == false)
+    monitor.setOnline(false)
+    // Let the observing task process the yielded value (poll, don't assume one yield).
+    for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
+    #expect(sut.isOffline == true)
+}
+
+@Test @MainActor func viewModelDeallocatesWhenReleased() async {
+    weak var weakVM: RecordsListViewModel?
+    do {
+        let (sut, _, _, _) = makeSUT()
+        weakVM = sut
+        #expect(weakVM != nil)
+    }
+    // Allow the cancelled monitor task to unwind.
+    for _ in 0..<1000 where weakVM != nil { await Task.yield() }
+    #expect(weakVM == nil)
+}
