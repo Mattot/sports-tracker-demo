@@ -2065,7 +2065,9 @@ git commit -m "feat(sportrecord): add Firestore remote data source and compositi
 
 # Phase B — App integration (after you create the Xcode project)
 
-> These tasks assume the Xcode app project exists at the repo root, with the `Core` and `SportRecord` local packages added, the **Factory** package added (`https://github.com/hmlongco/Factory`, from 2.4.0), the **firebase-ios-sdk** package added with the **FirebaseFirestore** product linked to the app target, and `GoogleService-Info.plist` in the app target. Verification is by **building and running in Xcode** (`⌘R`) — there are no package tests for the app target.
+> These tasks assume the Xcode app project exists, with the `Core` and `SportRecord` local packages added, the **Factory** package (`https://github.com/hmlongco/Factory`), the **firebase-ios-sdk** package with **FirebaseCore** + **FirebaseFirestore** linked to the app target, and `GoogleService-Info.plist` in the app target.
+>
+> **As built (actuals):** the app target is **`SportsTracker`**, files live under `SportsTracker/SportsTracker/{DI,Navigation}/`, and the project uses Xcode 16 **file-system-synchronized groups** — new files in the target folder are compiled with no `pbxproj` edits. **Factory is 3.x, whose module is `FactoryKit`** (`import FactoryKit`, not `import Factory`); firebase-ios-sdk is 12.x. The committed source under `SportsTracker/` is source-of-truth for these tasks.
 
 ## Task 13: DI container registrations
 
@@ -2076,7 +2078,7 @@ git commit -m "feat(sportrecord): add Firestore remote data source and compositi
 
 `<App>/DI/Container+SportRecord.swift`:
 ```swift
-import Factory
+import FactoryKit
 import SwiftData
 import Core
 import SportRecord
@@ -2154,7 +2156,9 @@ Adapts the provided `SportAppNavigation.swift` template: the `ScreenFactory` res
 import SwiftUI
 import Observation
 
-enum Route: Hashable, Codable, Sendable {}
+// `Codable` is intentionally omitted: it can't be synthesized for an empty enum,
+// and `NavigationStack(path:)` only needs `Hashable`. Add it with the first case.
+enum Route: Hashable, Sendable {}
 
 enum Sheet: Identifiable, Hashable {
     case addRecord
@@ -2167,7 +2171,8 @@ final class AppRouter {
     var path: [Route] = []
     var sheet: Sheet?
 
-    func push(_ route: Route) { path.append(route) }
+    // `push(_:)` arrives with the first `Route` case — a function over the
+    // currently-uninhabited `Route` would be uncallable (dead-code warning).
     func pop() { guard !path.isEmpty else { return }; path.removeLast() }
     func popToRoot() { path.removeAll() }
 
@@ -2207,7 +2212,7 @@ struct AddRecordPlaceholderView: View {
 `<App>/Navigation/ScreenFactory.swift`:
 ```swift
 import SwiftUI
-import Factory
+import FactoryKit
 import SportRecord
 
 @MainActor
@@ -2245,9 +2250,9 @@ struct AppFlowView: View {
     var body: some View {
         NavigationStack(path: $router.path) {
             factory.recordsList()
-                .navigationDestination(for: Route.self) { route in
-                    switch route {}   // exhaustive over the uninhabited Route enum
-                }
+            // No `.navigationDestination` yet: `Route` is uninhabited (no pushes in
+            // iteration 1), and `switch route {}` won't compile inside a ViewBuilder.
+            // The first push adds one `Route` case + one `.navigationDestination`.
         }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
@@ -2258,14 +2263,14 @@ struct AppFlowView: View {
     }
 }
 ```
-(Note: the App owns the `NavigationStack` here; `RecordsListView` is only its root view and must not introduce its own stack. The first push is one `Route` case + one `navigationDestination` branch — nothing structural changes.)
+(Note: the App owns the `NavigationStack` here; `RecordsListView` is only its root view and must not introduce its own stack.)
 
 - [ ] **Step 5: App entry**
 
 `<App>/SportApp.swift`:
 ```swift
 import SwiftUI
-import Factory
+import FactoryKit
 import FirebaseCore
 
 @main
@@ -2304,7 +2309,9 @@ git commit -m "feat(app): wire navigation, composition root, and Firebase config
 
 No code — a checklist confirming the assignment's list requirements against the running app. Seed a few records directly in Firestore and via a temporary local insert (or defer local records to iteration 2's add screen) to exercise the states.
 
-- [ ] Launch on a simulator → **empty state** shows ("No Sport Records").
+**Automated smoke test already done:** the app was built, installed, and launched on a booted simulator (`xcodebuild` + `simctl`). It launched without crashing (Firebase configured, DI graph resolved, no `fatalError`), the `connectivity` logger emitted "Path monitor started" (confirming the VM was constructed and `observeConnectivity()` ran), and a screenshot showed the **empty state** rendering with the "Sport Records" title and Select / + toolbar. The remaining items below need seeded data and gestures, best done interactively in Xcode.
+
+- [x] Launch on a simulator → **empty state** shows ("No Sport Records"). *(verified via simctl + screenshot)*
 - [ ] With records present → list renders, **rows colour-coded** by storage type (blue local / purple remote), duration formatted ("30m", "1h 23m").
 - [ ] **Segmented filter** All / Local / Remote filters in place; switching does **not** re-hit the network (observe: no loading spinner between switches).
 - [ ] **Pull to refresh** reloads.
