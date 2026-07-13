@@ -1,46 +1,19 @@
 # macOS
 .DS_Store
 
-# Xcode
-## User settings & state
-xcuserdata/
-*.xcuserstate
-*.xcscmblueprint
-*.xccheckout
-
-## Build products
-build/
+# Xcode build output & per-user state (never needed to build)
 DerivedData/
-*.moved-aside
-*.hmap
-*.ipa
-*.dSYM.zip
-*.dSYM
+build/
+*.xcuserstate
+xcuserdata/
 
-## Xcode injected / generated
-*.xcodeproj/project.xcworkspace/xcuserdata/
-*.xcodeproj/xcuserdata/
-*.xcworkspace/xcuserdata/
-
-# Swift Package Manager
+# Swift Package Manager build artifacts
 .build/
+
+# Intentionally committed for a zero-setup clone/build/run:
+#   - the .xcodeproj / .xcworkspace   (opens & builds as-is)
+#   - GoogleService-Info.plist        (Firebase config)
+#   - Package.resolved                (pinned dependency versions)
+
+# Xcode-generated per-user SwiftPM package state
 .swiftpm/
-Package.resolved
-
-# CocoaPods (unused, but keep out just in case)
-Pods/
-
-# Carthage (unused)
-Carthage/Build/
-
-# Fastlane (unused)
-fastlane/report.xml
-fastlane/screenshots/
-fastlane/test_output/
-
-# Firebase — secrets should not be committed
-GoogleService-Info.plist
-
-# Editors
-*.swp
-*~.nib
