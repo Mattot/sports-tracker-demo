@@ -34,7 +34,8 @@ public final class RecordsListViewModel {
         self.fetchUseCase = fetch
         self.deleteUseCase = delete
         self.networkMonitor = networkMonitor
-        self.isOffline = !networkMonitor.isOnline
+        // `isOffline` starts optimistic (false); the monitor stream yields the
+        // real reachability on subscription and updates it from there.
         observeNetwork()
     }
 

@@ -1,5 +1,4 @@
 import Foundation
-import os
 import Core
 @testable import SportRecord
 
@@ -78,29 +77,18 @@ final class FakeDeleteUseCase: DeleteSportRecordsUseCase {
     }
 }
 
-final class FakeNetworkMonitor: NetworkMonitor, @unchecked Sendable {
-    private let state = OSAllocatedUnfairLock(initialState: (online: true, continuation: AsyncStream<Bool>.Continuation?.none))
+final class FakeNetworkMonitor: NetworkMonitor {
+    private let stream: AsyncStream<Bool>
+    private let continuation: AsyncStream<Bool>.Continuation
 
     init(isOnline: Bool = true) {
-        state.withLock { $0.online = isOnline }
+        (stream, continuation) = AsyncStream<Bool>.makeStream()
+        continuation.yield(isOnline)
     }
 
-    var isOnline: Bool { state.withLock { $0.online } }
-
-    var updates: AsyncStream<Bool> {
-        AsyncStream { continuation in
-            let current = state.withLock { current -> Bool in
-                current.continuation = continuation
-                return current.online
-            }
-            continuation.yield(current)
-        }
-    }
+    var updates: AsyncStream<Bool> { stream }
 
     func setOnline(_ online: Bool) {
-        state.withLock { current in
-            current.online = online
-            current.continuation?.yield(online)
-        }
+        continuation.yield(online)
     }
 }

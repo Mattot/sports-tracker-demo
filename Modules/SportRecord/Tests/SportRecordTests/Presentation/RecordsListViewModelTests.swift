@@ -69,8 +69,10 @@ private func makeSUT(
 
 // MARK: offline
 
-@Test @MainActor func offlineMonitorSetsIsOffline() async {
+@Test @MainActor func offlineMonitorReflectsInitialOfflineState() async {
     let (sut, _, _, _) = makeSUT(isOnline: false)
+    // Initial reachability now arrives via the monitor stream, so poll for it.
+    for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
     #expect(sut.isOffline)
 }
 
