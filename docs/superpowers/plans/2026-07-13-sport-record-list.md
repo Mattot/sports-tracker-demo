@@ -16,9 +16,10 @@
 - **Packages live under** `Modules/Core` and `Modules/SportRecord`. Paths below are relative to the repo root.
 - **Test runner (packages):** run from inside the package directory:
   ```bash
-  xcodebuild test -scheme <PackageName> -destination 'platform=iOS Simulator,name=iPhone 16' -quiet
+  xcodebuild test -scheme <PackageName> -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
   ```
-  Success prints `** TEST SUCCEEDED **`. A build/compile-only check uses `xcodebuild build -scheme <PackageName> -destination 'platform=iOS Simulator,name=iPhone 16' -quiet` → `** BUILD SUCCEEDED **`.
+  Build-only check: `xcodebuild build -scheme <PackageName> -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5'`.
+  **Environment notes (verified):** in this environment the plain `iPhone 16` device exists only on the **iOS 18.5** runtime, so pin `,OS=18.5` (this also matches the packages' iOS 18 floor). Xcode 26.6's `-quiet` fully *suppresses* the `** TEST SUCCEEDED **` / `** BUILD SUCCEEDED **` banner, so **treat exit code 0 as success** (`echo "EXIT=$?"`); drop `-quiet` (optionally `| tail -30`) if you want to see the banner/test summary. A non-zero exit means failure — inspect the output.
 - **Swift Testing** (`import Testing`, `@Test`, `#expect`) — matches the provided navigation template; not XCTest.
 - **TDD applies to logic** (entities, use cases, repository, view model, mappers, local data source). **Infrastructure and SwiftUI views** (NWPathMonitor concrete, `MessageBanner`, `ContentStateView`, `RecordsListView`, `SportRecordRow`, the Firestore concrete) are **not** unit-tested — they are verified by compiling/building for the simulator, because they either wrap OS singletons or are view code with no logic to assert without snapshot infra. This is called out per task.
 - **Commits:** one per task step as indicated. End each commit message body with the Co-Authored-By trailer already used in this repo.
