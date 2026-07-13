@@ -1348,6 +1348,27 @@ private func makeSUT(
     #expect(sut.isOffline)
 }
 
+@Test @MainActor func offlineFlipsWhenMonitorGoesOffline() async {
+    let (sut, _, _, monitor) = makeSUT(isOnline: true)
+    #expect(sut.isOffline == false)
+    monitor.setOnline(false)
+    // Let the observing task process the yielded value (poll, don't assume one yield).
+    for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
+    #expect(sut.isOffline == true)
+}
+
+@Test @MainActor func viewModelDeallocatesWhenReleased() async {
+    // Fails if the network-observing Task retains the VM (see observeNetwork).
+    weak var weakVM: RecordsListViewModel?
+    do {
+        let (sut, _, _, _) = makeSUT()
+        weakVM = sut
+        #expect(weakVM != nil)
+    }
+    for _ in 0..<1000 where weakVM != nil { await Task.yield() }
+    #expect(weakVM == nil)
+}
+
 // MARK: refresh
 
 @Test @MainActor func refreshFailureKeepsExistingList() async {
@@ -1490,7 +1511,11 @@ public final class RecordsListViewModel {
     public var isDeleteConfirmationPresented = false
     public var deleteError: String?
 
-    private var monitorTask: Task<Void, Never>?
+    // `deinit` on a `@MainActor` class is nonisolated in Swift 6, so it cannot
+    // touch a main-actor-isolated stored property directly. Written only during
+    // main-actor-isolated construction and read/cancelled in `deinit`, so
+    // `nonisolated(unsafe)` is safe here.
+    nonisolated(unsafe) private var monitorTask: Task<Void, Never>?
 
     public init(
         fetch: FetchSportRecordsUseCase,
@@ -1606,9 +1631,14 @@ public final class RecordsListViewModel {
     // MARK: - Network
 
     private func observeNetwork() {
+        // Re-derive `self` weakly on each iteration. Binding it once before the
+        // loop would hold a strong reference across every `await` suspension,
+        // creating a VM -> monitorTask -> closure -> self cycle that leaks the
+        // ViewModel and prevents `deinit` (hence cancellation) from ever running.
         monitorTask = Task { [weak self] in
-            guard let self else { return }
-            for await online in networkMonitor.updates {
+            guard let stream = self?.networkMonitor.updates else { return }
+            for await online in stream {
+                guard let self else { return }
                 self.isOffline = !online
             }
         }
