@@ -1,4 +1,6 @@
 import Foundation
+import os
+import Core
 @testable import SportRecord
 
 /// Fake repository whose fetch/delete behaviour is set per test. Used on the
@@ -53,3 +55,52 @@ final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSou
 }
 
 struct AnyError: Error {}
+
+@MainActor
+final class FakeFetchUseCase: FetchSportRecordsUseCase {
+    var result = SportRecordsFetchResult(records: [], failedStores: [])
+    private(set) var callCount = 0
+
+    func execute() async -> SportRecordsFetchResult {
+        callCount += 1
+        return result
+    }
+}
+
+@MainActor
+final class FakeDeleteUseCase: DeleteSportRecordsUseCase {
+    var errorToThrow: SportRecordsDeleteError?
+    private(set) var deletedBatches: [[SportRecord]] = []
+
+    func execute(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
+        deletedBatches.append(records)
+        if let errorToThrow { throw errorToThrow }
+    }
+}
+
+final class FakeNetworkMonitor: NetworkMonitor, @unchecked Sendable {
+    private let state = OSAllocatedUnfairLock(initialState: (online: true, continuation: AsyncStream<Bool>.Continuation?.none))
+
+    init(isOnline: Bool = true) {
+        state.withLock { $0.online = isOnline }
+    }
+
+    var isOnline: Bool { state.withLock { $0.online } }
+
+    var updates: AsyncStream<Bool> {
+        AsyncStream { continuation in
+            let current = state.withLock { current -> Bool in
+                current.continuation = continuation
+                return current.online
+            }
+            continuation.yield(current)
+        }
+    }
+
+    func setOnline(_ online: Bool) {
+        state.withLock { current in
+            current.online = online
+            current.continuation?.yield(online)
+        }
+    }
+}
