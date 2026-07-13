@@ -5,4 +5,5 @@ public enum Loggers {
     private static let subsystem = "com.matusselecky.sportstracker"
 
     public static let connectivity = Logger(subsystem: subsystem, category: "connectivity")
+    public static let data = Logger(subsystem: subsystem, category: "data")
 }

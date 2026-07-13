@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 public struct DefaultSportRecordRepository: SportRecordRepository {
     private let local: LocalSportRecordDataSource
@@ -40,22 +41,47 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
     }
 
     // MARK: - Helpers (swallow per-store errors into optional/bool signals)
+    //
+    // The data sources log the underlying error; here we log the coordinated
+    // degradation decision (which store dropped out / failed to delete).
 
     private func fetchLocal() async -> [SportRecord]? {
-        try? await local.fetch()
+        do {
+            return try await local.fetch()
+        } catch {
+            Loggers.data.debug("Local fetch failed; excluding local store from results")
+            return nil
+        }
     }
 
     private func fetchRemote() async -> [SportRecord]? {
-        try? await remote.fetch()
+        do {
+            return try await remote.fetch()
+        } catch {
+            Loggers.data.debug("Remote fetch failed; excluding remote store from results")
+            return nil
+        }
     }
 
     private func deleteLocal(ids: [UUID]) async -> Bool {
         guard !ids.isEmpty else { return true }
-        do { try await local.delete(ids: ids); return true } catch { return false }
+        do {
+            try await local.delete(ids: ids)
+            return true
+        } catch {
+            Loggers.data.debug("Local delete failed for \(ids.count) record(s)")
+            return false
+        }
     }
 
     private func deleteRemote(ids: [UUID]) async -> Bool {
         guard !ids.isEmpty else { return true }
-        do { try await remote.delete(ids: ids); return true } catch { return false }
+        do {
+            try await remote.delete(ids: ids)
+            return true
+        } catch {
+            Loggers.data.debug("Remote delete failed for \(ids.count) record(s)")
+            return false
+        }
     }
 }
