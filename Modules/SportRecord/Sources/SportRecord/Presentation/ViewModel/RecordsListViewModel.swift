@@ -19,11 +19,12 @@ public final class RecordsListViewModel {
     public var isDeleteConfirmationPresented = false
     public var deleteError: String?
 
-    // `deinit` on a `@MainActor` class is nonisolated in Swift 6, so it cannot
-    // touch a main-actor-isolated stored property directly. This task is only
-    // ever written from `init` and read/cancelled from `deinit`/`observeNetwork`,
-    // so `nonisolated(unsafe)` is safe here without changing behavior.
-    nonisolated(unsafe) private var monitorTask: Task<Void, Never>?
+    // Lifecycle plumbing, not observable UI state: `@ObservationIgnored` keeps it
+    // a real stored property (so `nonisolated(unsafe)` actually applies). `deinit`
+    // on a `@MainActor` class is nonisolated and can't touch a main-actor-isolated
+    // property; `nonisolated(unsafe)` is required for a mutable stored property and
+    // is safe here — written only on the main actor, read/cancelled in `deinit`.
+    @ObservationIgnored nonisolated(unsafe) private var monitorTask: Task<Void, Never>?
 
     public init(
         fetch: FetchSportRecordsUseCase,
