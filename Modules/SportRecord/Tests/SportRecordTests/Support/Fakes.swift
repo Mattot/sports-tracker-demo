@@ -91,6 +91,17 @@ final class FakeDeleteUseCase: DeleteSportRecordsUseCase {
     }
 }
 
+@MainActor
+final class FakeSaveSportRecordUseCase: SaveSportRecordUseCase {
+    var errorToThrow: (any Error)?
+    private(set) var saved: [SportRecord] = []
+
+    func execute(_ record: SportRecord) async throws {
+        saved.append(record)
+        if let errorToThrow { throw errorToThrow }
+    }
+}
+
 final class FakeNetworkMonitor: NetworkMonitor {
     private let stream: AsyncStream<Bool>
     private let continuation: AsyncStream<Bool>.Continuation

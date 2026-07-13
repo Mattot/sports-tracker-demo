@@ -33,3 +33,20 @@ import Foundation
         try await sut.execute([Sample.record()])
     }
 }
+
+@Test func saveUseCaseForwardsToRepository() async throws {
+    let repo = FakeSportRecordRepository()
+    let sut = DefaultSaveSportRecordUseCase(repository: repo)
+    let record = Sample.record()
+    try await sut.execute(record)
+    #expect(repo.savedRecords.map(\.id) == [record.id])
+}
+
+@Test func saveUseCasePropagatesError() async {
+    let repo = FakeSportRecordRepository()
+    repo.saveError = AnyError()
+    let sut = DefaultSaveSportRecordUseCase(repository: repo)
+    await #expect(throws: (any Error).self) {
+        try await sut.execute(Sample.record())
+    }
+}
