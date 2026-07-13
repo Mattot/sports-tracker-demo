@@ -126,3 +126,37 @@ private func makeSUT() -> (DefaultSportRecordRepository, local: FakeDataSource, 
         try await sut.delete([Sample.record(storage: .local), Sample.record(storage: .remote)])
     }
 }
+
+// MARK: save routing
+
+@Test func saveLocalRecordRoutesToLocalOnly() async throws {
+    let (sut, local, remote) = makeSUT()
+    let record = Sample.record(storage: .local)
+    try await sut.save(record)
+    #expect(local.inserted.map(\.id) == [record.id])
+    #expect(remote.inserted.isEmpty)
+}
+
+@Test func saveRemoteRecordRoutesToRemoteOnly() async throws {
+    let (sut, local, remote) = makeSUT()
+    let record = Sample.record(storage: .remote)
+    try await sut.save(record)
+    #expect(remote.inserted.map(\.id) == [record.id])
+    #expect(local.inserted.isEmpty)
+}
+
+@Test func saveLocalFailurePropagates() async {
+    let (sut, local, _) = makeSUT()
+    local.insertError = AnyError()
+    await #expect(throws: (any Error).self) {
+        try await sut.save(Sample.record(storage: .local))
+    }
+}
+
+@Test func saveRemoteFailurePropagates() async {
+    let (sut, _, remote) = makeSUT()
+    remote.insertError = AnyError()
+    await #expect(throws: (any Error).self) {
+        try await sut.save(Sample.record(storage: .remote))
+    }
+}

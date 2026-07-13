@@ -26,6 +26,13 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
         return SportRecordsFetchResult(records: records, failedStores: failed)
     }
 
+    public func save(_ record: SportRecord) async throws {
+        switch record.storageType {
+        case .local:  try await local.insert(record)
+        case .remote: try await remote.insert(record)
+        }
+    }
+
     public func delete(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
         let localIDs = records.filter { $0.storageType == .local }.map(\.id)
         let remoteIDs = records.filter { $0.storageType == .remote }.map(\.id)

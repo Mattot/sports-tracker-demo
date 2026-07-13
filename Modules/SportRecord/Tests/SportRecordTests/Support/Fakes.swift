@@ -7,12 +7,19 @@ import Core
 final class FakeSportRecordRepository: SportRecordRepository, @unchecked Sendable {
     var fetchResult = SportRecordsFetchResult(records: [], failedStores: [])
     var deleteError: SportRecordsDeleteError?
+    var saveError: Error?
     private(set) var fetchCallCount = 0
     private(set) var deletedRecords: [[SportRecord]] = []
+    private(set) var savedRecords: [SportRecord] = []
 
     func fetch() async -> SportRecordsFetchResult {
         fetchCallCount += 1
         return fetchResult
+    }
+
+    func save(_ record: SportRecord) async throws {
+        savedRecords.append(record)
+        if let saveError { throw saveError }
     }
 
     func delete(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
