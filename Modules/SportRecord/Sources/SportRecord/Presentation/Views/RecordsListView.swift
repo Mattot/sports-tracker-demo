@@ -10,35 +10,35 @@ public struct RecordsListView: View {
         self.onAddRecord = onAddRecord
     }
 
+    // Root view of the App-owned NavigationStack — it must NOT introduce its own
+    // stack, so navigation state (path, title, toolbar) stays composed in App.
     public var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Sport Records")
-                .safeAreaInset(edge: .top, spacing: 0) { banner }
-                .toolbar { toolbarContent }
-                .confirmationDialog(
-                    "Delete \(viewModel.selection.count) record(s)?",
-                    isPresented: $viewModel.isDeleteConfirmationPresented,
-                    titleVisibility: .visible
-                ) {
-                    Button("Delete", role: .destructive) {
-                        Task { await viewModel.deleteSelected() }
-                    }
-                    Button("Cancel", role: .cancel) {}
+        content
+            .navigationTitle("Sport Records")
+            .safeAreaInset(edge: .top, spacing: 0) { banner }
+            .toolbar { toolbarContent }
+            .confirmationDialog(
+                "Delete \(viewModel.selection.count) record(s)?",
+                isPresented: $viewModel.isDeleteConfirmationPresented,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    Task { await viewModel.deleteSelected() }
                 }
-                .alert(
-                    "Delete failed",
-                    isPresented: Binding(
-                        get: { viewModel.deleteError != nil },
-                        set: { if !$0 { viewModel.deleteError = nil } }
-                    )
-                ) {
-                    Button("OK", role: .cancel) {}
-                } message: {
-                    Text(viewModel.deleteError ?? "")
-                }
-        }
-        .task { await viewModel.load() }
+                Button("Cancel", role: .cancel) {}
+            }
+            .alert(
+                "Delete failed",
+                isPresented: Binding(
+                    get: { viewModel.deleteError != nil },
+                    set: { if !$0 { viewModel.deleteError = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.deleteError ?? "")
+            }
+            .task { await viewModel.load() }
     }
 
     // MARK: - Content
