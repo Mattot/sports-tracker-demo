@@ -25,6 +25,6 @@ final class AppRouter {
     func pop() { guard !path.isEmpty else { return }; path.removeLast() }
     func popToRoot() { path.removeAll() }
 
-    func presentAddRecord() { sheet = .addRecord }
+    func present(_ sheet: Sheet) { self.sheet = sheet }
     func dismissSheet() { sheet = nil }
 }

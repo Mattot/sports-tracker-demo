@@ -117,6 +117,9 @@ public struct RecordsListView: View {
                 viewModel.isEditing.toggle()
                 if !viewModel.isEditing { viewModel.selection = [] }
             }
+            // Nothing to select when the current filter shows no records — but
+            // never disable "Done", or the user could get stuck in edit mode.
+            .disabled(!viewModel.isEditing && viewModel.visibleRecords.isEmpty)
         }
         ToolbarItem(placement: .topBarTrailing) {
             if viewModel.isEditing {

@@ -17,7 +17,7 @@ struct ScreenFactory {
                 delete: container.deleteSportRecordsUseCase(),
                 networkMonitor: container.networkMonitor()
             ),
-            onAddRecord: { router.presentAddRecord() }
+            onAddRecord: { router.present(.addRecord) }
         )
     }
 
