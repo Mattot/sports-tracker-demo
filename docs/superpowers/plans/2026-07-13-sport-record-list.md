@@ -1835,6 +1835,9 @@ public struct RecordsListView: View {
                 viewModel.isEditing.toggle()
                 if !viewModel.isEditing { viewModel.selection = [] }
             }
+            // Nothing to select when the current filter shows no records — but
+            // never disable "Done", or the user could get stuck in edit mode.
+            .disabled(!viewModel.isEditing && viewModel.visibleRecords.isEmpty)
         }
         ToolbarItem(placement: .topBarTrailing) {
             if viewModel.isEditing {
@@ -2176,7 +2179,7 @@ final class AppRouter {
     func pop() { guard !path.isEmpty else { return }; path.removeLast() }
     func popToRoot() { path.removeAll() }
 
-    func presentAddRecord() { sheet = .addRecord }
+    func present(_ sheet: Sheet) { self.sheet = sheet }
     func dismissSheet() { sheet = nil }
 }
 ```
@@ -2227,7 +2230,7 @@ struct ScreenFactory {
                 delete: container.deleteSportRecordsUseCase(),
                 networkMonitor: container.networkMonitor()
             ),
-            onAddRecord: { router.presentAddRecord() }
+            onAddRecord: { router.present(.addRecord) }
         )
     }
 
