@@ -8,6 +8,8 @@
 
 **Tech Stack:** Swift 6, SwiftUI, SwiftData, FirebaseFirestore, Factory, Swift Testing, SPM local packages.
 
+> **Post-Phase-A revisions (committed code is source-of-truth):** after Phase A was implemented, a few refinements landed that this doc reflects inline: the `NetworkMonitor` is a lockless stream-only protocol; connectivity is observed from the view's `.task` via `observeConnectivity()` (no stored task/`deinit` in the VM); `RecordsListView` does not own a `NavigationStack` (the App's `AppFlowView` does); the data sources and repository log via `Loggers.data`; the scaffolding placeholders (`Core.swift`, `SportRecord.swift`) were removed once real sources existed; and `.gitignore` commits the Xcode project, `GoogleService-Info.plist`, and `Package.resolved` for a zero-setup clone. The data-source code blocks in Tasks 8/12 and the repository helpers in Task 9 additionally gained `Loggers.data` error logging not re-transcribed here.
+
 ---
 
 ## Conventions & assumptions
@@ -154,8 +156,11 @@ public enum Loggers {
     private static let subsystem = "com.matusselecky.sportstracker"
 
     public static let connectivity = Logger(subsystem: subsystem, category: "connectivity")
+    public static let data = Logger(subsystem: subsystem, category: "data")
 }
 ```
+
+The data layer logs through `Loggers.data`: the SwiftData and Firestore data sources log the raw error before rethrowing; `DefaultSportRecordRepository` logs the coordinated degradation decision at its error-swallowing sites (where errors would otherwise vanish).
 
 - [ ] **Step 2: Write the protocol + concrete monitor (lockless)**
 
@@ -1323,32 +1328,23 @@ private func makeSUT(
 
 // MARK: offline
 
-@Test @MainActor func offlineMonitorReflectsInitialOfflineState() async {
+@Test @MainActor func observeConnectivityReflectsInitialOfflineState() async {
     let (sut, _, _, _) = makeSUT(isOnline: false)
-    // Initial reachability now arrives via the monitor stream, so poll for it.
+    let task = Task { await sut.observeConnectivity() }
+    defer { task.cancel() }
+    // Initial reachability arrives via the monitor stream, so poll for it.
     for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
     #expect(sut.isOffline)
 }
 
-@Test @MainActor func offlineFlipsWhenMonitorGoesOffline() async {
+@Test @MainActor func observeConnectivityReflectsGoingOffline() async {
     let (sut, _, _, monitor) = makeSUT(isOnline: true)
-    #expect(sut.isOffline == false)
+    let task = Task { await sut.observeConnectivity() }
+    defer { task.cancel() }
     monitor.setOnline(false)
-    // Let the observing task process the yielded value (poll, don't assume one yield).
+    // Both the initial online and the offline value are buffered; poll until offline.
     for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
-    #expect(sut.isOffline == true)
-}
-
-@Test @MainActor func viewModelDeallocatesWhenReleased() async {
-    // Fails if the network-observing Task retains the VM (see observeNetwork).
-    weak var weakVM: RecordsListViewModel?
-    do {
-        let (sut, _, _, _) = makeSUT()
-        weakVM = sut
-        #expect(weakVM != nil)
-    }
-    for _ in 0..<1000 where weakVM != nil { await Task.yield() }
-    #expect(weakVM == nil)
+    #expect(sut.isOffline)
 }
 
 // MARK: refresh
@@ -1493,14 +1489,6 @@ public final class RecordsListViewModel {
     public var isDeleteConfirmationPresented = false
     public var deleteError: String?
 
-    // Lifecycle plumbing, not observable UI state: `@ObservationIgnored` keeps it
-    // a real stored property (so `nonisolated(unsafe)` actually applies and doesn't
-    // warn "has no effect"). `deinit` on a `@MainActor` class is nonisolated and
-    // can't touch a main-actor-isolated property; `nonisolated(unsafe)` is required
-    // for a mutable stored property and is safe here — written only on the main
-    // actor during construction, read/cancelled in `deinit`.
-    @ObservationIgnored nonisolated(unsafe) private var monitorTask: Task<Void, Never>?
-
     public init(
         fetch: FetchSportRecordsUseCase,
         delete: DeleteSportRecordsUseCase,
@@ -1509,9 +1497,6 @@ public final class RecordsListViewModel {
         self.fetchUseCase = fetch
         self.deleteUseCase = delete
         self.networkMonitor = networkMonitor
-        // `isOffline` starts optimistic (false); the monitor stream yields the
-        // real reachability on subscription and updates it from there.
-        observeNetwork()
     }
 
     deinit {
@@ -1615,17 +1600,13 @@ public final class RecordsListViewModel {
 
     // MARK: - Network
 
-    private func observeNetwork() {
-        // Re-derive `self` weakly on each iteration. Binding it once before the
-        // loop would hold a strong reference across every `await` suspension,
-        // creating a VM -> monitorTask -> closure -> self cycle that leaks the
-        // ViewModel and prevents `deinit` (hence cancellation) from ever running.
-        monitorTask = Task { [weak self] in
-            guard let stream = self?.networkMonitor.updates else { return }
-            for await online in stream {
-                guard let self else { return }
-                self.isOffline = !online
-            }
+    /// Observes connectivity until the calling task is cancelled. Drive this from
+    /// the view's `.task` so SwiftUI ties its lifetime to the view — no stored
+    /// task, no `deinit`, no manual cancellation. `isOffline` starts optimistic
+    /// (false) and is corrected by the stream's first value.
+    public func observeConnectivity() async {
+        for await online in networkMonitor.updates {
+            isOffline = !online
         }
     }
 }
@@ -1776,6 +1757,7 @@ public struct RecordsListView: View {
                 Text(viewModel.deleteError ?? "")
             }
             .task { await viewModel.load() }
+            .task { await viewModel.observeConnectivity() }
     }
 
     // MARK: - Content
