@@ -41,10 +41,17 @@ final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSou
     var fetchError: Error?
     var deleteError: Error?
     private(set) var deletedIds: [[UUID]] = []
+    private(set) var inserted: [SportRecord] = []
+    var insertError: Error?
 
     func fetch() async throws -> [SportRecord] {
         if let fetchError { throw fetchError }
         return records
+    }
+
+    func insert(_ record: SportRecord) async throws {
+        inserted.append(record)
+        if let insertError { throw insertError }
     }
 
     func delete(ids: [UUID]) async throws {

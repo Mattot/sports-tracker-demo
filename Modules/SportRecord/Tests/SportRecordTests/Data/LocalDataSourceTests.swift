@@ -52,3 +52,19 @@ private func seed(_ container: ModelContainer, _ models: [SportRecordModel]) thr
 
     #expect(remaining.count == 1)
 }
+
+@Test @MainActor func insertThenFetchReturnsRecord() async throws {
+    let container = try makeInMemoryContainer()
+    let sut = SwiftDataSportRecordDataSource(modelContainer: container)
+    let record = Sample.record(name: "Swim", location: "Pool", duration: 1800, storage: .local, createdAt: .init(timeIntervalSince1970: 5))
+
+    try await sut.insert(record)
+    let fetched = try await sut.fetch()
+
+    #expect(fetched.count == 1)
+    #expect(fetched.first?.id == record.id)
+    #expect(fetched.first?.name == "Swim")
+    #expect(fetched.first?.location == "Pool")
+    #expect(fetched.first?.duration == 1800)
+    #expect(fetched.first?.storageType == .local)
+}

@@ -18,6 +18,16 @@ actor SwiftDataSportRecordDataSource: LocalSportRecordDataSource {
         }
     }
 
+    func insert(_ record: SportRecord) async throws {
+        do {
+            modelContext.insert(SportRecordModel(record: record))
+            try modelContext.save()
+        } catch {
+            Loggers.data.error("SwiftData insert failed: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
     func delete(ids: [UUID]) async throws {
         guard !ids.isEmpty else { return }
         do {

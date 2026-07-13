@@ -15,3 +15,14 @@ import Foundation
     #expect(record.createdAt == Date(timeIntervalSince1970: 42))
     #expect(record.storageType == .remote)
 }
+
+@Test func recordMapsToDTODroppingId() {
+    let record = Sample.record(name: "Row", location: "Lake", duration: 900, storage: .remote, createdAt: .init(timeIntervalSince1970: 7))
+    let dto = SportRecordDTO(record: record)
+
+    #expect(dto.name == "Row")
+    #expect(dto.location == "Lake")
+    #expect(dto.duration == 900)
+    #expect(dto.createdAt == Date(timeIntervalSince1970: 7))
+    // (DTO has no id field — the record's UUID is the Firestore document ID.)
+}

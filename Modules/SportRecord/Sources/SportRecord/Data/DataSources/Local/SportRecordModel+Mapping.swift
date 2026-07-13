@@ -11,3 +11,16 @@ extension SportRecordModel {
         )
     }
 }
+
+extension SportRecordModel {
+    /// Builds a persistence model from a domain record (storageType is implicit).
+    convenience init(record: SportRecord) {
+        self.init(
+            id: record.id,
+            name: record.name,
+            location: record.location,
+            duration: record.duration,
+            createdAt: record.createdAt
+        )
+    }
+}

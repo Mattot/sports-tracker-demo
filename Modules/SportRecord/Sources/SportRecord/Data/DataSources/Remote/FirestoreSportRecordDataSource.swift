@@ -26,6 +26,15 @@ struct FirestoreSportRecordDataSource: RemoteSportRecordDataSource {
         }
     }
 
+    func insert(_ record: SportRecord) async throws {
+        do {
+            try collection.document(record.id.uuidString).setData(from: SportRecordDTO(record: record))
+        } catch {
+            Loggers.data.error("Firestore insert failed: \(error.localizedDescription, privacy: .public)")
+            throw error
+        }
+    }
+
     func delete(ids: [UUID]) async throws {
         guard !ids.isEmpty else { return }
         do {
