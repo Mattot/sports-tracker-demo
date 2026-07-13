@@ -43,26 +43,35 @@ Because it is a test task ("further development to show your abilities is welcom
 ```
 SportRecord/
 ├── Domain/
-│   ├── SportRecord.swift              // entity (Sendable value type)
-│   ├── StorageType.swift              // .local / .remote
-│   ├── SportRecordRepository.swift    // protocol
+│   ├── Entities/
+│   │   ├── SportRecord.swift               // entity (Sendable value type)
+│   │   ├── StorageType.swift               // .local / .remote
+│   │   ├── SportRecordsFetchResult.swift   // merged records + failedStores
+│   │   └── SportRecordsDeleteError.swift   // typed delete error carrying failedStores
+│   ├── Repositories/
+│   │   └── SportRecordRepository.swift     // protocol
 │   └── UseCases/
 │       ├── FetchSportRecordsUseCase.swift
 │       └── DeleteSportRecordsUseCase.swift
 ├── Data/
-│   ├── Local/
-│   │   ├── SportRecordModel.swift              // @Model
-│   │   ├── SwiftDataSportRecordDataSource.swift// @ModelActor, LocalSportRecordDataSource
-│   │   └── SportRecordModel+Mapping.swift
-│   ├── Remote/
-│   │   ├── SportRecordDTO.swift                // Codable Firestore shape
-│   │   ├── FirestoreSportRecordDataSource.swift// RemoteSportRecordDataSource
-│   │   └── SportRecordDTO+Mapping.swift
-│   └── DefaultSportRecordRepository.swift
+│   ├── DataSources/
+│   │   ├── Local/
+│   │   │   ├── SportRecordModel.swift               // @Model
+│   │   │   ├── SwiftDataSportRecordDataSource.swift // @ModelActor, LocalSportRecordDataSource
+│   │   │   └── SportRecordModel+Mapping.swift
+│   │   └── Remote/
+│   │       ├── SportRecordDTO.swift                 // Codable Firestore shape
+│   │       ├── FirestoreSportRecordDataSource.swift // RemoteSportRecordDataSource
+│   │       └── SportRecordDTO+Mapping.swift
+│   └── Repositories/
+│       └── DefaultSportRecordRepository.swift
 └── Presentation/
-    ├── RecordsListState.swift
-    ├── RecordsListViewModel.swift
-    └── RecordsListView.swift (+ SportRecordRow, state/banner subviews)
+    ├── ViewModel/
+    │   ├── RecordsListViewModel.swift
+    │   └── RecordsListState.swift
+    └── Views/
+        ├── RecordsListView.swift
+        └── SportRecordRow.swift            // loading/empty/error via Core ContentStateView; banner via Core MessageBanner
 ```
 
 ### `App`
@@ -107,12 +116,22 @@ struct SportRecordsFetchResult: Sendable {
 
 Chosen over a throwing fetch so that a single-store failure still returns the other store's records **and** carries the failure signal for banners. The banner therefore reads two orthogonal signals: `NetworkMonitor.isOnline` ("You're offline — showing local records") and `failedStores.contains(.remote)` while online ("Couldn't reach remote — showing local records").
 
+### Delete error (partial-failure aware)
+
+```swift
+struct SportRecordsDeleteError: Error, Sendable {
+    let failedStores: Set<StorageType> // exactly the store(s) whose delete threw
+}
+```
+
+Symmetric with the fetch result: each store commits its deletes independently, so a mixed multi-select delete can partially fail. The error names precisely which store(s) failed, so the ViewModel can drop the rows that were actually deleted and keep only the failed ones. Swift 6 **typed throws** (`throws(SportRecordsDeleteError)`) makes the single failure mode explicit and the handled states exhaustive.
+
 ### Repository protocol (coordinating)
 
 ```swift
 protocol SportRecordRepository: Sendable {
-    func fetch() async -> SportRecordsFetchResult        // async-let both stores, merge, sort, collect failedStores
-    func delete(_ records: [SportRecord]) async throws   // group by storageType, dispatch to each source
+    func fetch() async -> SportRecordsFetchResult                               // async-let both stores, merge, sort, collect failedStores
+    func delete(_ records: [SportRecord]) async throws(SportRecordsDeleteError) // group by storageType; succeeded stores commit even if the other fails
 }
 ```
 
@@ -125,7 +144,7 @@ protocol FetchSportRecordsUseCase: Sendable {
     func execute() async -> SportRecordsFetchResult
 }
 protocol DeleteSportRecordsUseCase: Sendable {
-    func execute(_ records: [SportRecord]) async throws
+    func execute(_ records: [SportRecord]) async throws(SportRecordsDeleteError)
 }
 ```
 
@@ -186,7 +205,7 @@ struct SportRecordDTO: Codable, Sendable {   // Firestore document shape; doc ID
 Holds both data sources.
 
 - `fetch()`: `async let local = local.fetch(); async let remote = remote.fetch();` await each independently; merge successes; sort by `createdAt` descending; populate `failedStores` from whichever threw. Never throws.
-- `delete(_:)`: group records by `storageType`, then dispatch `local.delete(ids:)` / `remote.delete(ids:)` for the non-empty groups. Throws if a routed delete fails.
+- `delete(_:)`: group records by `storageType`; run the non-empty groups' deletes concurrently (`async let`). Each store commits independently — a failure in one store does **not** roll back the other. If any group throws, catch it and throw `SportRecordsDeleteError(failedStores:)` listing exactly the store(s) that failed (records in a succeeded store are already gone). Returns normally only when every routed delete succeeds.
 
 ---
 
@@ -208,7 +227,7 @@ enum RecordsFilter: CaseIterable, Sendable { case all, local, remote }
 
 Constructor-injected with `FetchSportRecordsUseCase`, `DeleteSportRecordsUseCase`, `NetworkMonitor`.
 
-Observable state: `content`, `filter`, `isRefreshing`, `remoteUnavailable`, `isOffline` (mirrors monitor), `editMode`, `selection: Set<UUID>`, `isDeleteConfirmationPresented`.
+Observable state: `content`, `filter`, `isRefreshing`, `remoteUnavailable`, `isOffline` (mirrors monitor), `editMode`, `selection: Set<UUID>`, `isDeleteConfirmationPresented`, `deleteError: String?` (drives an alert; `nil` when there's no error).
 
 Derived:
 
@@ -219,9 +238,9 @@ Methods:
 
 - `load()` — initial load; enters `.loading` only when no data is present yet; maps `SportRecordsFetchResult` → `content` + `remoteUnavailable`.
 - `refresh()` — pull-to-refresh; sets `isRefreshing`; on failure keeps the existing list rather than blowing it away.
-- `delete(_:)` — swipe-to-delete; **pessimistic** (await store success, then remove the row; surface an error and keep the row on failure).
+- `delete(_:)` — swipe-to-delete of a single record; **pessimistic**. Await the use case; on success drop the row. On `SportRecordsDeleteError` the failed store necessarily equals the record's own store, so keep the row and set `deleteError` to a store-specific message.
 - `requestDeleteSelection()` — sets `isDeleteConfirmationPresented` (edit mode only).
-- `deleteSelected()` — batch delete of selected ids; on success clears selection and exits edit mode.
+- `deleteSelected()` — batch delete of the selected records (may span both stores). Await the use case; on success remove all selected rows, clear `selection`, exit edit mode. On `SportRecordsDeleteError`: remove only the rows whose `storageType` is **not** in `failedStores` (those stores committed), keep the rows in `failedStores`, reduce `selection` to just the failed rows, stay in edit mode, and set `deleteError` to a message naming the failed store(s).
 - `retry()` — from the `.failed` state.
 
 ### `RecordsListView` (thin — binds and delegates, no business logic)
@@ -232,6 +251,7 @@ Methods:
 - `.refreshable { await viewModel.refresh() }`.
 - `SportRecordRow` (own file): storage-type color accent (Core token), name / location / formatted duration; `.swipeActions` delete. Duration formatting is presentation-only (`Duration.UnitsFormatStyle` → e.g. "1h 23m").
 - `.toolbar`: `EditButton`; a "+" button that calls the injected `onAddRecord` closure (wired now so the flow works; add screen is iteration 2); in edit mode, a delete-selected action → `.confirmationDialog` (the batch-delete confirmation; swipe-delete needs none because the swipe gesture is its own confirmation).
+- `.alert` bound to `$viewModel.deleteError` — surfaces per-store delete failures (offline remote delete, etc.).
 - Portrait/landscape: `List` adapts automatically; Dynamic Type respected; no special layout code — verified.
 
 ---
@@ -250,9 +270,55 @@ Methods:
 
 ## 7. Testing (Swift Testing)
 
-- **Repository** — fake `Local`/`Remote` data sources: assert merge + sort; `failedStores` populated when remote throws while local still returns; delete routing by `storageType`.
-- **ViewModel** — fake use cases + fake `NetworkMonitor`: state transitions (`loading → loaded / empty / failed`); **filter change does not refetch**; offline / remote-unavailable banner flags; swipe-delete removes-on-success / keeps-on-failure; batch delete clears selection.
-- **Local data source** — real in-memory `ModelContainer` (`isStoredInMemoryOnly: true`): round-trip fetch/delete.
+Fakes: `Local`/`Remote` data sources whose `fetch`/`delete` can be told to succeed or throw per call; a fake `NetworkMonitor`; fake use cases for the ViewModel.
+
+### Fetch & list-state tests
+
+- **Repository fetch** — merge + sort by `createdAt` desc; `failedStores == []` when both succeed; `failedStores == [.remote]` when remote throws while local returns; `failedStores == [.local, .remote]` when both throw (records empty).
+- **ViewModel** — state transitions (`loading → loaded / empty / failed`); `.failed` only when records empty **and** both stores failed; `.empty` when fetch succeeds with zero records; **filter change does not refetch** (assert the fetch use case is called exactly once across filter switches); a filter with no matches yields empty `visibleRecords` but keeps `content == .loaded`; `isOffline` / `remoteUnavailable` banner flags; `refresh()` keeps the existing list when the refetch fails.
+
+### Delete tests — full local/remote combination matrix
+
+**Repository `delete(_:)`** — assert routing (correct ids to each source) and the thrown `failedStores`:
+
+| Selection    | Local delete | Remote delete | Expected outcome                                              |
+|--------------|--------------|---------------|--------------------------------------------------------------|
+| local-only   | success      | —             | returns; `local.delete(ids:)` called with those ids          |
+| local-only   | throws       | —             | throws `failedStores == [.local]`                            |
+| remote-only  | —            | success       | returns; `remote.delete(ids:)` called with those ids         |
+| remote-only  | —            | throws        | throws `failedStores == [.remote]`                          |
+| mixed        | success      | success       | returns; both sources called with their respective ids       |
+| mixed        | success      | throws        | throws `failedStores == [.remote]`; `local.delete` still called (committed) |
+| mixed        | throws       | success       | throws `failedStores == [.local]`; `remote.delete` still called (committed) |
+| mixed        | throws       | throws        | throws `failedStores == [.local, .remote]`                  |
+
+**ViewModel delete handling** — fake `DeleteSportRecordsUseCase` returns success or throws a chosen `SportRecordsDeleteError`:
+
+*Swipe (single record):*
+
+| Record  | Outcome            | Expected                                              |
+|---------|--------------------|------------------------------------------------------|
+| local   | success            | row removed; `deleteError == nil`                    |
+| local   | throws `[.local]`  | row kept; `deleteError` set (local message)          |
+| remote  | success            | row removed; `deleteError == nil`                    |
+| remote  | throws `[.remote]` | row kept; `deleteError` set (remote message)         |
+
+*Batch (`deleteSelected`):*
+
+| Selection   | Outcome                   | Expected                                                                                 |
+|-------------|---------------------------|------------------------------------------------------------------------------------------|
+| local-only  | success                   | all removed; `selection` cleared; `editMode` inactive; `deleteError == nil`               |
+| local-only  | throws `[.local]`         | none removed; `selection` retained; `editMode` active; `deleteError` set                  |
+| remote-only | success                   | all removed; cleared; inactive                                                            |
+| remote-only | throws `[.remote]`        | none removed; retained; active; error set                                                |
+| mixed       | success                   | all removed; cleared; inactive                                                           |
+| mixed       | throws `[.remote]`        | local rows removed; remote rows kept; `selection` reduced to remote ids; active; error   |
+| mixed       | throws `[.local]`         | remote rows removed; local rows kept; `selection` reduced to local ids; active; error    |
+| mixed       | throws `[.local,.remote]` | none removed; `selection` retained; active; error                                        |
+
+### Data source tests
+
+- **Local data source** — real in-memory `ModelContainer` (`isStoredInMemoryOnly: true`): round-trip fetch, delete by ids (including deleting a subset), delete of a missing id is a no-op.
 - **Remote** — protocol-faked; live Firestore integration is out of scope for unit tests.
 
 ---
