@@ -34,7 +34,8 @@ Modules/
 ├── Core/
 │   ├── Package.swift
 │   ├── Sources/Core/
-│   │   ├── Networking/NetworkMonitor.swift        // protocol + PathNetworkMonitor (NWPathMonitor)
+│   │   ├── Networking/NetworkMonitor.swift        // stream-only protocol + lockless PathNetworkMonitor
+│   │   ├── Logging/Loggers.swift                  // os.Logger namespace (connectivity)
 │   │   └── DesignSystem/
 │   │       ├── MessageBanner.swift                // generic banner view
 │   │       └── ContentStateView.swift             // loading/empty/failed scaffolding
@@ -134,89 +135,79 @@ git commit -m "chore(core): scaffold Core Swift package"
 
 ---
 
-## Task 2: `Core` — NetworkMonitor (protocol + NWPathMonitor impl)
+## Task 2: `Core` — NetworkMonitor (protocol + NWPathMonitor impl) + Loggers
 
 Infrastructure wrapping an OS singleton — **not unit-tested**; verified by build. A fake for consumers is created later in the feature's test target (Task 10).
 
 **Files:**
 - Create: `Modules/Core/Sources/Core/Networking/NetworkMonitor.swift`
+- Create: `Modules/Core/Sources/Core/Logging/Loggers.swift`
 
-- [ ] **Step 1: Write the protocol + concrete monitor**
+- [ ] **Step 1: Write the Loggers namespace**
+
+`Modules/Core/Sources/Core/Logging/Loggers.swift`:
+```swift
+import os
+
+/// Central `os.Logger` namespace for the app's subsystems.
+public enum Loggers {
+    private static let subsystem = "com.matusselecky.sportstracker"
+
+    public static let connectivity = Logger(subsystem: subsystem, category: "connectivity")
+}
+```
+
+- [ ] **Step 2: Write the protocol + concrete monitor (lockless)**
 
 `Modules/Core/Sources/Core/Networking/NetworkMonitor.swift`:
 ```swift
 import Foundation
 import Network
-import os
 
-/// Observes device connectivity. `isOnline` is the last known value; `updates`
-/// yields the current value on subscription and then every change.
+/// Observes device connectivity as a stream of "is online" values. Each
+/// subscription to `updates` starts its own `NWPathMonitor`, yields the current
+/// reachability, then every change, until the consuming task ends.
 public protocol NetworkMonitor: Sendable {
-    var isOnline: Bool { get }
     var updates: AsyncStream<Bool> { get }
 }
 
-/// `NWPathMonitor`-backed implementation. Thread-safe via an unfair lock so it
-/// can satisfy `Sendable` with a synchronous `isOnline` getter.
-public final class PathNetworkMonitor: NetworkMonitor {
-    private struct State {
-        var isOnline = true
-        var continuations: [UUID: AsyncStream<Bool>.Continuation] = [:]
-    }
-
-    private let monitor = NWPathMonitor()
-    private let queue = DispatchQueue(label: "com.sportstracker.network-monitor")
-    private let state = OSAllocatedUnfairLock(initialState: State())
-
-    public init() {
-        monitor.pathUpdateHandler = { [state] path in
-            let online = path.status == .satisfied
-            state.withLock { current in
-                current.isOnline = online
-                for continuation in current.continuations.values {
-                    continuation.yield(online)
-                }
-            }
-        }
-        monitor.start(queue: queue)
-    }
-
-    public var isOnline: Bool {
-        state.withLock { $0.isOnline }
-    }
+/// `NWPathMonitor`-backed implementation. Lockless: the monitor lives entirely
+/// inside the `AsyncStream` closure and is cancelled when the stream terminates
+/// (i.e. when the observing task is cancelled), so there is no shared mutable
+/// state to synchronize and nothing to reconcile with Swift 6 isolation.
+public struct PathNetworkMonitor: NetworkMonitor {
+    public init() {}
 
     public var updates: AsyncStream<Bool> {
         AsyncStream { continuation in
-            let id = UUID()
-            let current = state.withLock { current -> Bool in
-                current.continuations[id] = continuation
-                return current.isOnline
+            let monitor = NWPathMonitor()
+            let queue = DispatchQueue(label: "com.matusselecky.sportstracker.connectivity")
+            monitor.pathUpdateHandler = { path in
+                continuation.yield(path.status == .satisfied)
             }
-            continuation.yield(current)
-            continuation.onTermination = { [state] _ in
-                state.withLock { _ = $0.continuations.removeValue(forKey: id) }
+            continuation.onTermination = { _ in
+                monitor.cancel()
+                Loggers.connectivity.debug("Path monitor cancelled")
             }
+            monitor.start(queue: queue)
+            Loggers.connectivity.debug("Path monitor started")
         }
-    }
-
-    deinit {
-        monitor.cancel()
     }
 }
 ```
 
-- [ ] **Step 2: Build to verify it compiles**
+- [ ] **Step 3: Build to verify it compiles**
 
-Run:
+Run (see the Conventions section for the destination/exit-code note):
 ```bash
-cd Modules/Core && xcodebuild build -scheme Core -destination 'platform=iOS Simulator,name=iPhone 16' -quiet
+cd Modules/Core && xcodebuild build -scheme Core -destination 'platform=iOS Simulator,name=iPhone 16,OS=18.5'
 ```
-Expected: `** BUILD SUCCEEDED **`
+Expected: EXIT 0.
 
-- [ ] **Step 3: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add Modules/Core/Sources/Core/Networking
+git add Modules/Core/Sources/Core/Networking Modules/Core/Sources/Core/Logging
 git commit -m "feat(core): add NetworkMonitor protocol and NWPathMonitor impl"
 ```
 
@@ -1239,34 +1230,23 @@ final class FakeDeleteUseCase: DeleteSportRecordsUseCase {
     }
 }
 
-final class FakeNetworkMonitor: NetworkMonitor, @unchecked Sendable {
-    private let state = OSAllocatedUnfairLock(initialState: (online: true, continuation: AsyncStream<Bool>.Continuation?.none))
+final class FakeNetworkMonitor: NetworkMonitor {
+    private let stream: AsyncStream<Bool>
+    private let continuation: AsyncStream<Bool>.Continuation
 
     init(isOnline: Bool = true) {
-        state.withLock { $0.online = isOnline }
+        (stream, continuation) = AsyncStream<Bool>.makeStream()
+        continuation.yield(isOnline)
     }
 
-    var isOnline: Bool { state.withLock { $0.online } }
-
-    var updates: AsyncStream<Bool> {
-        AsyncStream { continuation in
-            let current = state.withLock { current -> Bool in
-                current.continuation = continuation
-                return current.online
-            }
-            continuation.yield(current)
-        }
-    }
+    var updates: AsyncStream<Bool> { stream }
 
     func setOnline(_ online: Bool) {
-        state.withLock { current in
-            current.online = online
-            current.continuation?.yield(online)
-        }
+        continuation.yield(online)
     }
 }
 ```
-(Add `import os` at the top of `Fakes.swift` if not already present — `OSAllocatedUnfairLock` needs it. `import Core` is required for `NetworkMonitor`.)
+(`import Core` is required at the top of `Fakes.swift` for `NetworkMonitor`.)
 
 - [ ] **Step 2: Write the failing state + view-model tests**
 
@@ -1343,8 +1323,10 @@ private func makeSUT(
 
 // MARK: offline
 
-@Test @MainActor func offlineMonitorSetsIsOffline() async {
+@Test @MainActor func offlineMonitorReflectsInitialOfflineState() async {
     let (sut, _, _, _) = makeSUT(isOnline: false)
+    // Initial reachability now arrives via the monitor stream, so poll for it.
+    for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
     #expect(sut.isOffline)
 }
 
@@ -1527,7 +1509,8 @@ public final class RecordsListViewModel {
         self.fetchUseCase = fetch
         self.deleteUseCase = delete
         self.networkMonitor = networkMonitor
-        self.isOffline = !networkMonitor.isOnline
+        // `isOffline` starts optimistic (false); the monitor stream yields the
+        // real reachability on subscription and updates it from there.
         observeNetwork()
     }
 
@@ -1764,35 +1747,35 @@ public struct RecordsListView: View {
         self.onAddRecord = onAddRecord
     }
 
+    // Root view of the App-owned NavigationStack — it must NOT introduce its own
+    // stack, so navigation state (path, title, toolbar) stays composed in App.
     public var body: some View {
-        NavigationStack {
-            content
-                .navigationTitle("Sport Records")
-                .safeAreaInset(edge: .top, spacing: 0) { banner }
-                .toolbar { toolbarContent }
-                .confirmationDialog(
-                    "Delete \(viewModel.selection.count) record(s)?",
-                    isPresented: $viewModel.isDeleteConfirmationPresented,
-                    titleVisibility: .visible
-                ) {
-                    Button("Delete", role: .destructive) {
-                        Task { await viewModel.deleteSelected() }
-                    }
-                    Button("Cancel", role: .cancel) {}
+        content
+            .navigationTitle("Sport Records")
+            .safeAreaInset(edge: .top, spacing: 0) { banner }
+            .toolbar { toolbarContent }
+            .confirmationDialog(
+                "Delete \(viewModel.selection.count) record(s)?",
+                isPresented: $viewModel.isDeleteConfirmationPresented,
+                titleVisibility: .visible
+            ) {
+                Button("Delete", role: .destructive) {
+                    Task { await viewModel.deleteSelected() }
                 }
-                .alert(
-                    "Delete failed",
-                    isPresented: Binding(
-                        get: { viewModel.deleteError != nil },
-                        set: { if !$0 { viewModel.deleteError = nil } }
-                    )
-                ) {
-                    Button("OK", role: .cancel) {}
-                } message: {
-                    Text(viewModel.deleteError ?? "")
-                }
-        }
-        .task { await viewModel.load() }
+                Button("Cancel", role: .cancel) {}
+            }
+            .alert(
+                "Delete failed",
+                isPresented: Binding(
+                    get: { viewModel.deleteError != nil },
+                    set: { if !$0 { viewModel.deleteError = nil } }
+                )
+            ) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text(viewModel.deleteError ?? "")
+            }
+            .task { await viewModel.load() }
     }
 
     // MARK: - Content
@@ -2278,17 +2261,22 @@ struct AppFlowView: View {
     let factory: ScreenFactory
 
     var body: some View {
-        factory.recordsList()
-            .sheet(item: $router.sheet) { sheet in
-                switch sheet {
-                case .addRecord:
-                    factory.addRecord()
+        NavigationStack(path: $router.path) {
+            factory.recordsList()
+                .navigationDestination(for: Route.self) { route in
+                    switch route {}   // exhaustive over the uninhabited Route enum
                 }
+        }
+        .sheet(item: $router.sheet) { sheet in
+            switch sheet {
+            case .addRecord:
+                factory.addRecord()
             }
+        }
     }
 }
 ```
-(Note: `RecordsListView` owns its own `NavigationStack`, so the flow view does not add another. When pushes arrive in a later iteration, move the `NavigationStack(path:)` here and drop it from the screen.)
+(Note: the App owns the `NavigationStack` here; `RecordsListView` is only its root view and must not introduce its own stack. The first push is one `Route` case + one `navigationDestination` branch — nothing structural changes.)
 
 - [ ] **Step 5: App entry**
 
