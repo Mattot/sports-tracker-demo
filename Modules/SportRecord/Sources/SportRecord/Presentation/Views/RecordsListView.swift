@@ -39,6 +39,7 @@ public struct RecordsListView: View {
                 Text(viewModel.deleteError ?? "")
             }
             .task { await viewModel.load() }
+            .task { await viewModel.observeConnectivity() }
     }
 
     // MARK: - Content

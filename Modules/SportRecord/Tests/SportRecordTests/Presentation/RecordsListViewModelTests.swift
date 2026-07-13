@@ -69,9 +69,11 @@ private func makeSUT(
 
 // MARK: offline
 
-@Test @MainActor func offlineMonitorReflectsInitialOfflineState() async {
+@Test @MainActor func observeConnectivityReflectsInitialOfflineState() async {
     let (sut, _, _, _) = makeSUT(isOnline: false)
-    // Initial reachability now arrives via the monitor stream, so poll for it.
+    let task = Task { await sut.observeConnectivity() }
+    defer { task.cancel() }
+    // Initial reachability arrives via the monitor stream, so poll for it.
     for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
     #expect(sut.isOffline)
 }
@@ -154,25 +156,14 @@ private func makeSUT(
     #expect(sut.isEditing)
 }
 
-// MARK: network observation / lifecycle
+// MARK: network observation
 
-@Test @MainActor func offlineFlipsWhenMonitorGoesOffline() async {
+@Test @MainActor func observeConnectivityReflectsGoingOffline() async {
     let (sut, _, _, monitor) = makeSUT(isOnline: true)
-    #expect(sut.isOffline == false)
+    let task = Task { await sut.observeConnectivity() }
+    defer { task.cancel() }
     monitor.setOnline(false)
-    // Let the observing task process the yielded value (poll, don't assume one yield).
+    // Both the initial online and the offline value are buffered; poll until offline.
     for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
-    #expect(sut.isOffline == true)
-}
-
-@Test @MainActor func viewModelDeallocatesWhenReleased() async {
-    weak var weakVM: RecordsListViewModel?
-    do {
-        let (sut, _, _, _) = makeSUT()
-        weakVM = sut
-        #expect(weakVM != nil)
-    }
-    // Allow the cancelled monitor task to unwind.
-    for _ in 0..<1000 where weakVM != nil { await Task.yield() }
-    #expect(weakVM == nil)
+    #expect(sut.isOffline)
 }

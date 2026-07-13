@@ -19,13 +19,6 @@ public final class RecordsListViewModel {
     public var isDeleteConfirmationPresented = false
     public var deleteError: String?
 
-    // Lifecycle plumbing, not observable UI state: `@ObservationIgnored` keeps it
-    // a real stored property (so `nonisolated(unsafe)` actually applies). `deinit`
-    // on a `@MainActor` class is nonisolated and can't touch a main-actor-isolated
-    // property; `nonisolated(unsafe)` is required for a mutable stored property and
-    // is safe here — written only on the main actor, read/cancelled in `deinit`.
-    @ObservationIgnored nonisolated(unsafe) private var monitorTask: Task<Void, Never>?
-
     public init(
         fetch: FetchSportRecordsUseCase,
         delete: DeleteSportRecordsUseCase,
@@ -34,13 +27,6 @@ public final class RecordsListViewModel {
         self.fetchUseCase = fetch
         self.deleteUseCase = delete
         self.networkMonitor = networkMonitor
-        // `isOffline` starts optimistic (false); the monitor stream yields the
-        // real reachability on subscription and updates it from there.
-        observeNetwork()
-    }
-
-    deinit {
-        monitorTask?.cancel()
     }
 
     // MARK: - Derived
@@ -140,13 +126,13 @@ public final class RecordsListViewModel {
 
     // MARK: - Network
 
-    private func observeNetwork() {
-        monitorTask = Task { [weak self] in
-            guard let stream = self?.networkMonitor.updates else { return }
-            for await online in stream {
-                guard let self else { return }
-                self.isOffline = !online
-            }
+    /// Observes connectivity until the calling task is cancelled. Drive this from
+    /// the view's `.task` so SwiftUI ties its lifetime to the view — no stored
+    /// task, no `deinit`, no manual cancellation. `isOffline` starts optimistic
+    /// (false) and is corrected by the stream's first value.
+    public func observeConnectivity() async {
+        for await online in networkMonitor.updates {
+            isOffline = !online
         }
     }
 }
