@@ -135,6 +135,21 @@ private func makeSUT(
     if case .loaded(let r) = sut.content { #expect(r.count == 1) } else { Issue.record("list was blown away") }
 }
 
+// MARK: edit mode
+
+@Test @MainActor func cancelEditingClearsEditModeAndSelection() async {
+    let a = Sample.record(storage: .local)
+    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [a], failedStores: []))
+    await sut.load()
+    sut.isEditing = true
+    sut.selection = [a.id]
+
+    sut.cancelEditing()
+
+    #expect(sut.isEditing == false)
+    #expect(sut.selection.isEmpty)
+}
+
 // MARK: swipe delete
 
 @Test @MainActor func swipeDeleteLocalSuccessRemovesRow() async {

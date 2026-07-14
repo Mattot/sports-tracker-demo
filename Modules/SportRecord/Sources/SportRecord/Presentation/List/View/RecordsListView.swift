@@ -21,16 +21,6 @@ public struct RecordsListView: View {
             .navigationTitle("Sport Records")
             .safeAreaInset(edge: .top, spacing: 0) { banner }
             .toolbar { toolbarContent }
-            .confirmationDialog(
-                "Delete \(viewModel.selection.count) record(s)?",
-                isPresented: $viewModel.isDeleteConfirmationPresented,
-                titleVisibility: .visible
-            ) {
-                Button("Delete", role: .destructive) {
-                    Task { await viewModel.deleteSelected() }
-                }
-                Button("Cancel", role: .cancel) {}
-            }
             .alert(
                 "Delete failed",
                 isPresented: Binding(
@@ -107,11 +97,8 @@ public struct RecordsListView: View {
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    /// Local records are always current, so refreshing only makes sense for the
-    /// All and Remote segments — the Local segment gets no refresh button.
-    private var refreshAction: ContentStateView.Action? {
-        guard viewModel.filter != .local else { return nil }
-        return .init(title: "Refresh") { Task { await viewModel.refresh() } }
+    private var refreshAction: ContentStateView.Action {
+        .init(title: "Refresh") { Task { await viewModel.refresh() } }
     }
 
     /// Pull-to-refresh lives here — only when records are actually shown.
@@ -150,25 +137,41 @@ public struct RecordsListView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button(viewModel.isEditing ? "Done" : "Select") {
-                viewModel.isEditing.toggle()
-                if !viewModel.isEditing { viewModel.selection = [] }
+            Button(viewModel.isEditing ? "Done" : "Edit") {
+                if viewModel.isEditing { viewModel.cancelEditing() } else { viewModel.isEditing = true }
             }
             // Nothing to select when the current filter shows no records — but
             // never disable "Done", or the user could get stuck in edit mode.
             .disabled(!viewModel.isEditing && viewModel.visibleRecords.isEmpty)
         }
+        // Add stays put in edit mode — tapping it just cancels editing first.
         ToolbarItem(placement: .topBarTrailing) {
-            if viewModel.isEditing {
-                Button("Delete", role: .destructive) {
+            Button {
+                viewModel.cancelEditing()
+                onAddRecord { Task { await viewModel.load() } }
+            } label: {
+                Label("Add Record", systemImage: "plus")
+            }
+        }
+        // Delete lives in the bottom bar while editing; the confirmation hangs off
+        // this action rather than the content.
+        if viewModel.isEditing {
+            ToolbarItem(placement: .bottomBar) {
+                Button(role: .destructive) {
                     viewModel.requestDeleteSelection()
+                } label: {
+                    Text("Delete Records (\(viewModel.selection.count))")
                 }
                 .disabled(viewModel.selection.isEmpty)
-            } else {
-                Button {
-                    onAddRecord { Task { await viewModel.load() } }
-                } label: {
-                    Label("Add Record", systemImage: "plus")
+                .confirmationDialog(
+                    "Delete \(viewModel.selection.count) record(s)?",
+                    isPresented: $viewModel.isDeleteConfirmationPresented,
+                    titleVisibility: .visible
+                ) {
+                    Button("Delete", role: .destructive) {
+                        Task { await viewModel.deleteSelected() }
+                    }
+                    Button("Cancel", role: .cancel) {}
                 }
             }
         }

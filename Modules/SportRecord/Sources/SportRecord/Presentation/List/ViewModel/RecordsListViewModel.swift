@@ -110,6 +110,13 @@ public final class RecordsListViewModel {
         isDeleteConfirmationPresented = true
     }
 
+    /// Leaves edit mode and drops the selection — used by Done and by Add, since a
+    /// pending selection is meaningless once you move on to creating a record.
+    public func cancelEditing() {
+        isEditing = false
+        selection = []
+    }
+
     public func deleteSelected() async {
         let selected = loadedRecords.filter { selection.contains($0.id) }
         guard !selected.isEmpty else { return }

@@ -1,7 +1,10 @@
 import SwiftUI
 
 public struct AddRecordView: View {
+    private enum Field { case name, location }
+
     @State private var viewModel: AddRecordViewModel
+    @FocusState private var focusedField: Field?
     private let onSaved: () -> Void
     private let onCancel: () -> Void
 
@@ -19,7 +22,13 @@ public struct AddRecordView: View {
         Form {
             Section("Activity") {
                 TextField("Name", text: $viewModel.name)
+                    .focused($focusedField, equals: .name)
+                    .submitLabel(.next)
+                    .onSubmit { focusedField = .location }
                 TextField("Location", text: $viewModel.location)
+                    .focused($focusedField, equals: .location)
+                    .submitLabel(.done)
+                    .onSubmit { focusedField = nil }
             }
             Section("Duration") {
                 DurationPicker(
@@ -29,14 +38,18 @@ public struct AddRecordView: View {
                 )
             }
             Section("Storage") {
-                Picker("Storage", selection: $viewModel.storageType) {
+                Picker("Select storage", selection: $viewModel.storageType) {
                     ForEach(StorageType.allCases, id: \.self) { type in
-                        Text(type.label).tag(type)
+                        Text(type.label)
+                            .foregroundStyle(type.accentColor)
+                            .tag(type)
                     }
                 }
                 .pickerStyle(.menu)
+                .tint(viewModel.storageType.accentColor)
             }
         }
+        .onAppear { focusedField = .name }
         .navigationTitle("Add Record")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
