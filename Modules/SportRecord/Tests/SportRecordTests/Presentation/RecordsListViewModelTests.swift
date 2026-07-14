@@ -41,6 +41,44 @@ private func makeSUT(
     #expect(sut.remoteUnavailable)
 }
 
+// MARK: progressive local-first load
+
+@Test @MainActor func loadShowsLocalSnapshotBeforeRemoteCompletes() async {
+    let local = Sample.record(storage: .local)
+    let remote = Sample.record(storage: .remote)
+    let (sut, fetch, _, _) = makeSUT()
+    fetch.localSnapshotResult = [local]
+    fetch.result = .init(records: [local, remote], failedStores: [])
+    let gate = MainActorGate()
+    fetch.onExecute = { await gate.wait() }
+
+    let task = Task { await sut.load() }
+    // While the combined fetch (execute) is gated, the local snapshot is shown.
+    for _ in 0..<1000 where sut.visibleRecords.count != 1 { await Task.yield() }
+    #expect(sut.visibleRecords.map(\.id) == [local.id])
+
+    gate.release()
+    await task.value
+    #expect(Set(sut.visibleRecords.map(\.id)) == [local.id, remote.id])
+}
+
+@Test @MainActor func loadIgnoresLocalSnapshotWhenAlreadyLoaded() async {
+    let existing = Sample.record(storage: .remote)
+    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [existing], failedStores: []))
+    await sut.load()   // content is now .loaded([existing])
+
+    // A reload's snapshot must not overwrite the shown list before the combined result.
+    fetch.localSnapshotResult = [Sample.record(name: "Snapshot", storage: .local)]
+    let gate = MainActorGate()
+    fetch.onExecute = { await gate.wait() }
+    let task = Task { await sut.load() }
+    await Task.yield(); await Task.yield()
+    #expect(sut.visibleRecords.map(\.id) == [existing.id])   // unchanged while gated
+
+    gate.release()
+    await task.value
+}
+
 // MARK: filter
 
 @Test @MainActor func filterChangeDoesNotRefetch() async {

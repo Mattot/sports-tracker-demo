@@ -34,6 +34,16 @@ import Foundation
     }
 }
 
+@Test func fetchUseCaseLocalSnapshotForwardsToRepository() async {
+    let repo = FakeSportRecordRepository()
+    repo.localRecordsResult = [Sample.record(name: "Local")]
+    let sut = DefaultFetchSportRecordsUseCase(repository: repo)
+
+    let snapshot = await sut.localSnapshot()
+
+    #expect(snapshot.map(\.name) == ["Local"])
+}
+
 @Test func saveUseCaseForwardsToRepository() async throws {
     let repo = FakeSportRecordRepository()
     let sut = DefaultSaveSportRecordUseCase(repository: repo)

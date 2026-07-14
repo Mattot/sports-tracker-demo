@@ -49,6 +49,12 @@ public final class RecordsListViewModel {
 
     public func load() async {
         if loadedRecords.isEmpty { content = .loading }
+        // Paint local records immediately so the list isn't blocked waiting on the
+        // (possibly slow/offline) remote store; the combined result replaces it.
+        let localSnapshot = await fetchUseCase.localSnapshot()
+        if loadedRecords.isEmpty, !localSnapshot.isEmpty {
+            content = .loaded(localSnapshot)
+        }
         applyContent(await fetchUseCase.execute())
     }
 

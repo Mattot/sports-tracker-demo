@@ -6,6 +6,7 @@ import Core
 /// main actor in tests; mutable state is therefore not synchronized.
 final class FakeSportRecordRepository: SportRecordRepository, @unchecked Sendable {
     var fetchResult = SportRecordsFetchResult(records: [], failedStores: [])
+    var localRecordsResult: [SportRecord] = []
     var deleteError: SportRecordsDeleteError?
     var saveError: Error?
     private(set) var fetchCallCount = 0
@@ -15,6 +16,10 @@ final class FakeSportRecordRepository: SportRecordRepository, @unchecked Sendabl
     func fetch() async -> SportRecordsFetchResult {
         fetchCallCount += 1
         return fetchResult
+    }
+
+    func localRecords() async -> [SportRecord] {
+        localRecordsResult
     }
 
     func save(_ record: SportRecord) async throws {
@@ -72,11 +77,38 @@ struct AnyError: Error {}
 @MainActor
 final class FakeFetchUseCase: FetchSportRecordsUseCase {
     var result = SportRecordsFetchResult(records: [], failedStores: [])
+    var localSnapshotResult: [SportRecord] = []
+    /// Optional gate: when set, `execute()` suspends on it — lets a test observe
+    /// the local-snapshot-first state before the combined result arrives.
+    var onExecute: (@MainActor () async -> Void)?
     private(set) var callCount = 0
 
     func execute() async -> SportRecordsFetchResult {
         callCount += 1
+        if let onExecute { await onExecute() }
         return result
+    }
+
+    func localSnapshot() async -> [SportRecord] {
+        localSnapshotResult
+    }
+}
+
+/// A one-shot gate for tests: `wait()` suspends until `release()` is called.
+@MainActor
+final class MainActorGate {
+    private var continuation: CheckedContinuation<Void, Never>?
+    private var released = false
+
+    func wait() async {
+        if released { return }
+        await withCheckedContinuation { continuation = $0 }
+    }
+
+    func release() {
+        released = true
+        continuation?.resume()
+        continuation = nil
     }
 }
 

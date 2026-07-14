@@ -127,6 +127,27 @@ private func makeSUT() -> (DefaultSportRecordRepository, local: FakeDataSource, 
     }
 }
 
+// MARK: local snapshot
+
+@Test func localRecordsReturnsLocalStoreOnly() async {
+    let (sut, local, remote) = makeSUT()
+    local.records = [Sample.record(name: "L", storage: .local)]
+    remote.records = [Sample.record(name: "R", storage: .remote)]
+
+    let result = await sut.localRecords()
+
+    #expect(result.map(\.name) == ["L"])
+}
+
+@Test func localRecordsIsEmptyWhenLocalFails() async {
+    let (sut, local, _) = makeSUT()
+    local.fetchError = AnyError()
+
+    let result = await sut.localRecords()
+
+    #expect(result.isEmpty)
+}
+
 // MARK: save routing
 
 @Test func saveLocalRecordRoutesToLocalOnly() async throws {

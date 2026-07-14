@@ -26,6 +26,10 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
         return SportRecordsFetchResult(records: records, failedStores: failed)
     }
 
+    public func localRecords() async -> [SportRecord] {
+        await fetchLocal() ?? []
+    }
+
     public func save(_ record: SportRecord) async throws {
         switch record.storageType {
         case .local:  try await local.insert(record)
