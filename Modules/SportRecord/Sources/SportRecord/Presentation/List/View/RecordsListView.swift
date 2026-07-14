@@ -50,17 +50,30 @@ public struct RecordsListView: View {
     private var content: some View {
         switch viewModel.content {
         case .loading:
-            ContentStateView(state: .loading)
+            stateView(.loading)
         case .empty:
-            ContentStateView(state: .empty(title: "No Sport Records", message: "Add your first activity to see it here."))
+            stateView(.empty(title: "No Sport Records", message: "Add your first activity to see it here."))
         case .failed:
-            ContentStateView(
-                state: .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
+            stateView(
+                .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
                 onRetry: { Task { await viewModel.retry() } }
             )
         case .loaded:
             list
         }
+    }
+
+    /// A loading/empty/failed state that is still scrollable, so pull-to-refresh
+    /// works in every state — not only when records are loaded. `scrollBounceBehavior(.always)`
+    /// lets the short, centered content bounce (and thus refresh) even when it fits.
+    private func stateView(_ state: ContentStateView.State, onRetry: (() -> Void)? = nil) -> some View {
+        ScrollView {
+            ContentStateView(state: state, onRetry: onRetry)
+                .frame(maxWidth: .infinity)
+                .containerRelativeFrame(.vertical)
+        }
+        .scrollBounceBehavior(.always)
+        .refreshable { await viewModel.refresh() }
     }
 
     private var list: some View {
