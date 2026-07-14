@@ -138,7 +138,13 @@ public struct RecordsListView: View {
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
             Button(viewModel.isEditing ? "Done" : "Edit") {
-                if viewModel.isEditing { viewModel.cancelEditing() } else { viewModel.isEditing = true }
+                withAnimation {
+                    if viewModel.isEditing {
+                        viewModel.cancelEditing()
+                    } else {
+                        viewModel.isEditing = true
+                    }
+                }
             }
             // Disabled only when there's nothing to edit at all (no records / error) —
             // the selected segment doesn't matter. Never disable "Done".
