@@ -8,6 +8,9 @@ public struct RecordsListView: View {
     private let onAddRecord: (@escaping () -> Void) -> Void
 
     @Environment(\.scenePhase) private var scenePhase
+    // Measured List height, used to make the empty state fill the viewport
+    // (containerRelativeFrame doesn't size reliably inside a List).
+    @State private var listHeight: CGFloat = 0
 
     public init(viewModel: RecordsListViewModel, onAddRecord: @escaping (@escaping () -> Void) -> Void) {
         _viewModel = State(initialValue: viewModel)
@@ -19,7 +22,6 @@ public struct RecordsListView: View {
     public var body: some View {
         content
             .navigationTitle("Sport Records")
-            .safeAreaInset(edge: .top, spacing: 0) { banner }
             .toolbar { toolbarContent }
             .alert(
                 "Delete failed",
@@ -61,11 +63,13 @@ public struct RecordsListView: View {
         }
     }
 
-    /// A single plain List: the segmented filter is a pinned (sticky) section
-    /// header, and the section body is either the rows or a centered empty state.
-    /// Everything scrolls, so pull-to-refresh works on every segment.
+    /// A single plain List: the offline banner scrolls above a pinned (sticky)
+    /// segmented-filter section header, and the section body is the rows or a
+    /// centered empty state. Everything scrolls, so pull-to-refresh works on
+    /// every segment.
     private var recordsList: some View {
         List(selection: $viewModel.selection) {
+            banner
             Section {
                 if viewModel.visibleRecords.isEmpty {
                     emptyRow
@@ -89,6 +93,13 @@ public struct RecordsListView: View {
         .listStyle(.plain)
         .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
         .refreshable { await viewModel.refresh() }
+        .background {
+            GeometryReader { proxy in
+                Color.clear
+                    .onAppear { listHeight = proxy.size.height }
+                    .onChange(of: proxy.size.height) { _, height in listHeight = height }
+            }
+        }
     }
 
     private var filterPicker: some View {
@@ -105,30 +116,37 @@ public struct RecordsListView: View {
     }
 
     /// Overall "no records yet" when nothing exists anywhere, or a per-filter
-    /// message when the selected segment is empty. Fills the viewport so it
-    /// centres, and is untagged + `selectionDisabled` so edit mode can't select it.
+    /// message when the selected segment is empty. Sized to the measured List
+    /// height so it fills/centres, and untagged + `selectionDisabled` so edit
+    /// mode can't select it.
     @ViewBuilder
     private var emptyRow: some View {
         let state: ContentStateView.State = viewModel.hasRecords
             ? .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
             : .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
         ContentStateView(state: state)
-            .frame(maxWidth: .infinity)
-            .containerRelativeFrame(.vertical)
+            .frame(maxWidth: .infinity, minHeight: listHeight)
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets())
             .selectionDisabled()
     }
 
-    // MARK: - Banner
+    // MARK: - Banner (a scrollable row above the sticky filter)
 
     @ViewBuilder
     private var banner: some View {
         if viewModel.isOffline {
-            MessageBanner("You're offline — showing local records.", style: .warning)
+            bannerRow("You're offline — showing local records.", style: .warning)
         } else if viewModel.remoteUnavailable {
-            MessageBanner("Couldn't reach remote — showing local records.", style: .info)
+            bannerRow("Couldn't reach remote — showing local records.", style: .info)
         }
+    }
+
+    private func bannerRow(_ text: String, style: MessageBanner.Style) -> some View {
+        MessageBanner(text, style: style)
+            .listRowInsets(EdgeInsets())
+            .listRowSeparator(.hidden)
+            .selectionDisabled()
     }
 
     // MARK: - Toolbar
