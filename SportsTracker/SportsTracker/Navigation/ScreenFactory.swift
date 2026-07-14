@@ -17,11 +17,17 @@ struct ScreenFactory {
                 delete: container.deleteSportRecordsUseCase(),
                 networkMonitor: container.networkMonitor()
             ),
-            onAddRecord: { router.present(.addRecord) }
+            onAddRecord: { onSaved in router.present(.addRecord(onSaved: onSaved)) }
         )
     }
 
-    func addRecord() -> some View {
-        AddRecordPlaceholderView(onClose: { router.dismissSheet() })
+    func addRecord(onSaved: @escaping () -> Void) -> some View {
+        NavigationStack {
+            AddRecordView(
+                viewModel: AddRecordViewModel(save: container.saveSportRecordUseCase()),
+                onSaved: { onSaved(); router.dismissSheet() },
+                onCancel: { router.dismissSheet() }
+            )
+        }
     }
 }

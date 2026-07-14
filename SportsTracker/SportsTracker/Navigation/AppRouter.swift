@@ -8,10 +8,14 @@ import Observation
 /// the first case if path state-restoration is wanted.)
 enum Route: Hashable, Sendable {}
 
-/// Modal surfaces. One today.
-enum Sheet: Identifiable, Hashable {
-    case addRecord
-    var id: Self { self }
+/// Modal surfaces. The add-record sheet carries the list's reload callback, so
+/// `Sheet` can't be Hashable/Equatable (a closure isn't) — `.sheet(item:)` only
+/// needs Identifiable.
+enum Sheet: Identifiable {
+    case addRecord(onSaved: () -> Void)
+
+    enum ID: Hashable { case addRecord }
+    var id: ID { switch self { case .addRecord: .addRecord } }
 }
 
 @Observable

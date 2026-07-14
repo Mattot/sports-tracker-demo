@@ -15,8 +15,8 @@ struct AppFlowView: View {
         }
         .sheet(item: $router.sheet) { sheet in
             switch sheet {
-            case .addRecord:
-                factory.addRecord()
+            case .addRecord(let onSaved):
+                factory.addRecord(onSaved: onSaved)
             }
         }
     }

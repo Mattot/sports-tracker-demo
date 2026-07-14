@@ -42,4 +42,8 @@ extension Container {
     var deleteSportRecordsUseCase: Factory<DeleteSportRecordsUseCase> {
         self { DefaultDeleteSportRecordsUseCase(repository: self.sportRecordRepository()) }.cached
     }
+
+    var saveSportRecordUseCase: Factory<SaveSportRecordUseCase> {
+        self { DefaultSaveSportRecordUseCase(repository: self.sportRecordRepository()) }.cached
+    }
 }
