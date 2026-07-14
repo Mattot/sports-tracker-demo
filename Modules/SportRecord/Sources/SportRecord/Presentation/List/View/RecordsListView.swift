@@ -111,7 +111,7 @@ public struct RecordsListView: View {
     /// All and Remote segments — the Local segment gets no refresh button.
     private var refreshAction: ContentStateView.Action? {
         guard viewModel.filter != .local else { return nil }
-        return .init(title: "Refresh Data") { Task { await viewModel.refresh() } }
+        return .init(title: "Refresh") { Task { await viewModel.refresh() } }
     }
 
     /// Pull-to-refresh lives here — only when records are actually shown.

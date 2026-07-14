@@ -32,16 +32,18 @@ public final class RecordsListViewModel {
     // MARK: - Derived
 
     private var loadedRecords: [SportRecord] {
-        if case let .loaded(records) = content { records } else { [] }
+        guard case let .loaded(records) = content else { return [] }
+        return records
     }
 
     public var visibleRecords: [SportRecord] {
-        loadedRecords.filter { record in
-            switch filter {
-            case .all: true
-            case .local: record.storageType == .local
-            case .remote: record.storageType == .remote
-            }
+        switch filter {
+        case .all:
+            loadedRecords
+        case .local:
+            loadedRecords.filter { $0.storageType == .local }
+        case .remote:
+            loadedRecords.filter { $0.storageType == .remote }
         }
     }
 
