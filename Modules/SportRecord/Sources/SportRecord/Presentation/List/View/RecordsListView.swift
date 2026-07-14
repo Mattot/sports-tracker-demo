@@ -50,61 +50,65 @@ public struct RecordsListView: View {
     private var content: some View {
         switch viewModel.content {
         case .loading:
-            stateView(.loading)
-        case .empty:
-            stateView(.empty(title: "No Sport Records", message: "Add your first activity to see it here."))
+            ContentStateView(state: .loading)
         case .failed:
-            stateView(
-                .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
+            ContentStateView(
+                state: .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
                 onRetry: { Task { await viewModel.retry() } }
             )
-        case .loaded:
-            list
+        case .empty, .loaded:
+            dataView
         }
     }
 
-    /// A loading/empty/failed state that is still scrollable, so pull-to-refresh
-    /// works in every state — not only when records are loaded. `scrollBounceBehavior(.always)`
-    /// lets the short, centered content bounce (and thus refresh) even when it fits.
-    private func stateView(_ state: ContentStateView.State, onRetry: (() -> Void)? = nil) -> some View {
-        ScrollView {
-            ContentStateView(state: state, onRetry: onRetry)
-                .frame(maxWidth: .infinity)
-                .containerRelativeFrame(.vertical)
+    /// Shown whenever the fetch succeeded (records present or not): the filter is
+    /// always available, with the records list or a per-filter empty state below.
+    private var dataView: some View {
+        VStack(spacing: 0) {
+            filterPicker
+            if viewModel.visibleRecords.isEmpty {
+                emptyState
+            } else {
+                recordsList
+            }
         }
-        .scrollBounceBehavior(.always)
-        .refreshable { await viewModel.refresh() }
     }
 
-    private var list: some View {
+    private var filterPicker: some View {
+        Picker("Filter", selection: $viewModel.filter) {
+            ForEach(RecordsFilter.allCases) { filter in
+                Text(filter.title).tag(filter)
+            }
+        }
+        .pickerStyle(.segmented)
+        .padding(.horizontal)
+        .padding(.vertical, 8)
+    }
+
+    /// Overall "no records yet" when nothing exists anywhere, or a per-filter
+    /// message when only the selected segment is empty.
+    @ViewBuilder
+    private var emptyState: some View {
+        let state: ContentStateView.State = viewModel.content == .empty
+            ? .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
+            : .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
+        ContentStateView(state: state)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Pull-to-refresh lives here — only when records are actually shown.
+    private var recordsList: some View {
         List(selection: $viewModel.selection) {
-            Section {
-                if viewModel.visibleRecords.isEmpty {
-                    Text("No \(viewModel.filter.title.lowercased()) records")
-                        .foregroundStyle(.secondary)
-                } else {
-                    ForEach(viewModel.visibleRecords) { record in
-                        SportRecordRow(record: record)
-                            .tag(record.id)
-                            .swipeActions(edge: .trailing) {
-                                Button(role: .destructive) {
-                                    Task { await viewModel.delete(record) }
-                                } label: {
-                                    Label("Delete", systemImage: "trash")
-                                }
-                            }
+            ForEach(viewModel.visibleRecords) { record in
+                SportRecordRow(record: record)
+                    .tag(record.id)
+                    .swipeActions(edge: .trailing) {
+                        Button(role: .destructive) {
+                            Task { await viewModel.delete(record) }
+                        } label: {
+                            Label("Delete", systemImage: "trash")
+                        }
                     }
-                }
-            } header: {
-                Picker("Filter", selection: $viewModel.filter) {
-                    ForEach(RecordsFilter.allCases) { filter in
-                        Text(filter.title).tag(filter)
-                    }
-                }
-                .pickerStyle(.segmented)
-                .textCase(nil)
-                .listRowInsets(EdgeInsets())
-                .padding(.bottom, 8)
             }
         }
         .listStyle(.plain)

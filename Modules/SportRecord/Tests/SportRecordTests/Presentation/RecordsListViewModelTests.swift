@@ -118,17 +118,6 @@ private func makeSUT(
 
 // MARK: refresh
 
-@Test @MainActor func refreshRecoversFromFailedState() async {
-    // Pull-to-refresh is now available in the failed state; a good result recovers.
-    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [], failedStores: [.local, .remote]))
-    await sut.load()
-    #expect(sut.content == .failed)
-
-    fetch.result = .init(records: [Sample.record()], failedStores: [])
-    await sut.refresh()
-    if case .loaded(let r) = sut.content { #expect(r.count == 1) } else { Issue.record("did not recover from failed") }
-}
-
 @Test @MainActor func refreshFailureKeepsExistingList() async {
     let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [Sample.record()], failedStores: []))
     await sut.load()
