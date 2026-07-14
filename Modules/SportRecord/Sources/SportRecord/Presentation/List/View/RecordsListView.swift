@@ -57,21 +57,38 @@ public struct RecordsListView: View {
                 action: .init(title: "Try Again") { Task { await viewModel.retry() } }
             )
         case .loaded:
-            dataView
+            recordsList
         }
     }
 
-    /// Shown whenever the fetch succeeded (records present or not): the filter is
-    /// always available, with the records list or a per-filter empty state below.
-    private var dataView: some View {
-        VStack(spacing: 0) {
-            filterPicker
-            if viewModel.visibleRecords.isEmpty {
-                emptyState
-            } else {
-                recordsList
+    /// A single plain List: the segmented filter is a pinned (sticky) section
+    /// header, and the section body is either the rows or a centered empty state.
+    /// Everything scrolls, so pull-to-refresh works on every segment.
+    private var recordsList: some View {
+        List(selection: $viewModel.selection) {
+            Section {
+                if viewModel.visibleRecords.isEmpty {
+                    emptyRow
+                } else {
+                    ForEach(viewModel.visibleRecords) { record in
+                        SportRecordRow(record: record)
+                            .tag(record.id)
+                            .swipeActions(edge: .trailing) {
+                                Button(role: .destructive) {
+                                    Task { await viewModel.delete(record) }
+                                } label: {
+                                    Label("Delete", systemImage: "trash")
+                                }
+                            }
+                    }
+                }
+            } header: {
+                filterPicker
             }
         }
+        .listStyle(.plain)
+        .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
+        .refreshable { await viewModel.refresh() }
     }
 
     private var filterPicker: some View {
@@ -81,44 +98,26 @@ public struct RecordsListView: View {
             }
         }
         .pickerStyle(.segmented)
+        .textCase(nil)
+        .listRowInsets(EdgeInsets())
         .padding(.horizontal)
         .padding(.vertical, 8)
     }
 
     /// Overall "no records yet" when nothing exists anywhere, or a per-filter
-    /// message when only the selected segment is empty. Carries a refresh action,
-    /// since the empty state has no pull-to-refresh.
+    /// message when the selected segment is empty. Fills the viewport so it
+    /// centres, and is untagged + `selectionDisabled` so edit mode can't select it.
     @ViewBuilder
-    private var emptyState: some View {
+    private var emptyRow: some View {
         let state: ContentStateView.State = viewModel.hasRecords
             ? .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
             : .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
-        ContentStateView(state: state, action: refreshAction)
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var refreshAction: ContentStateView.Action {
-        .init(title: "Refresh") { Task { await viewModel.refresh() } }
-    }
-
-    /// Pull-to-refresh lives here — only when records are actually shown.
-    private var recordsList: some View {
-        List(selection: $viewModel.selection) {
-            ForEach(viewModel.visibleRecords) { record in
-                SportRecordRow(record: record)
-                    .tag(record.id)
-                    .swipeActions(edge: .trailing) {
-                        Button(role: .destructive) {
-                            Task { await viewModel.delete(record) }
-                        } label: {
-                            Label("Delete", systemImage: "trash")
-                        }
-                    }
-            }
-        }
-        .listStyle(.plain)
-        .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
-        .refreshable { await viewModel.refresh() }
+        ContentStateView(state: state)
+            .frame(maxWidth: .infinity)
+            .containerRelativeFrame(.vertical)
+            .listRowSeparator(.hidden)
+            .listRowInsets(EdgeInsets())
+            .selectionDisabled()
     }
 
     // MARK: - Banner
