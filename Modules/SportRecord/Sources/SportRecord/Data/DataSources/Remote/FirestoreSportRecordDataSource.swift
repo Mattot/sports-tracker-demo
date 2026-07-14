@@ -37,15 +37,18 @@ struct FirestoreSportRecordDataSource: RemoteSportRecordDataSource {
 
     func delete(ids: [UUID]) async throws {
         guard !ids.isEmpty else { return }
-        do {
-            let batch = Firestore.firestore().batch()
-            for id in ids {
-                batch.deleteDocument(collection.document(id.uuidString))
+        let batch = Firestore.firestore().batch()
+        for id in ids {
+            batch.deleteDocument(collection.document(id.uuidString))
+        }
+        // Fire-and-forget: the delete applies to Firestore's local cache
+        // immediately and syncs on reconnect, so offline deletes don't block the
+        // UI waiting for a server ack (matches how `insert` works). A failure from
+        // the eventual server commit is logged rather than surfaced synchronously.
+        batch.commit { error in
+            if let error {
+                Loggers.data.error("Firestore delete failed: \(error.localizedDescription, privacy: .public)")
             }
-            try await batch.commit()
-        } catch {
-            Loggers.data.error("Firestore delete failed: \(error.localizedDescription, privacy: .public)")
-            throw error
         }
     }
 }
