@@ -7,6 +7,12 @@ public struct RecordsListView: View {
     // callback carries it: (onSaved) -> Void.
     private let onAddRecord: (@escaping () -> Void) -> Void
 
+    @Environment(\.scenePhase) private var scenePhase
+    // The scene passes through `.inactive` on the way back from `.background`, so
+    // the previous phase is never `.background` at the `.active` step. Track it, so
+    // a mere `.inactive` blip (app switcher, Control Center) doesn't refetch.
+    @State private var wasBackgrounded = false
+
     public init(viewModel: RecordsListViewModel, onAddRecord: @escaping (@escaping () -> Void) -> Void) {
         _viewModel = State(initialValue: viewModel)
         self.onAddRecord = onAddRecord
@@ -42,6 +48,19 @@ public struct RecordsListView: View {
             }
             .task { await viewModel.load() }
             .task { await viewModel.observeConnectivity() }
+            .onChange(of: scenePhase) { _, phase in
+                switch phase {
+                case .background:
+                    wasBackgrounded = true
+                case .active where wasBackgrounded:
+                    // Returned to the foreground — pick up anything added or
+                    // removed elsewhere (other device, Firestore console) while away.
+                    wasBackgrounded = false
+                    Task { await viewModel.refresh() }
+                default:
+                    break
+                }
+            }
     }
 
     // MARK: - Content
