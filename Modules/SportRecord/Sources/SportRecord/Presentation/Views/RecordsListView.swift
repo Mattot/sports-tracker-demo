@@ -3,9 +3,11 @@ import Core
 
 public struct RecordsListView: View {
     @State private var viewModel: RecordsListViewModel
-    private let onAddRecord: () -> Void
+    // The list supplies its own reload as the add screen's `onSaved`, so the
+    // callback carries it: (onSaved) -> Void.
+    private let onAddRecord: (@escaping () -> Void) -> Void
 
-    public init(viewModel: RecordsListViewModel, onAddRecord: @escaping () -> Void) {
+    public init(viewModel: RecordsListViewModel, onAddRecord: @escaping (@escaping () -> Void) -> Void) {
         _viewModel = State(initialValue: viewModel)
         self.onAddRecord = onAddRecord
     }
@@ -129,7 +131,7 @@ public struct RecordsListView: View {
                 .disabled(viewModel.selection.isEmpty)
             } else {
                 Button {
-                    onAddRecord()
+                    onAddRecord { Task { await viewModel.load() } }
                 } label: {
                     Label("Add Record", systemImage: "plus")
                 }
