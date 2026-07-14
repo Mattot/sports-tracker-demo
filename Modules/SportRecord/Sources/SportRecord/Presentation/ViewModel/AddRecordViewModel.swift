@@ -32,6 +32,7 @@ public final class AddRecordViewModel {
     /// form intact for retry.
     public func save() async -> Bool {
         guard canSave else { return false }
+        saveError = nil
         isSaving = true
         defer { isSaving = false }
 
