@@ -64,7 +64,7 @@ public struct RecordsListView: View {
         case .failed:
             ContentStateView(
                 state: .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
-                onRetry: { Task { await viewModel.retry() } }
+                action: .init(title: "Try Again") { Task { await viewModel.retry() } }
             )
         case .empty, .loaded:
             dataView
@@ -96,14 +96,22 @@ public struct RecordsListView: View {
     }
 
     /// Overall "no records yet" when nothing exists anywhere, or a per-filter
-    /// message when only the selected segment is empty.
+    /// message when only the selected segment is empty. Carries a refresh action,
+    /// since the empty state has no pull-to-refresh.
     @ViewBuilder
     private var emptyState: some View {
         let state: ContentStateView.State = viewModel.content == .empty
             ? .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
             : .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
-        ContentStateView(state: state)
+        ContentStateView(state: state, action: refreshAction)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    /// Local records are always current, so refreshing only makes sense for the
+    /// All and Remote segments — the Local segment gets no refresh button.
+    private var refreshAction: ContentStateView.Action? {
+        guard viewModel.filter != .local else { return nil }
+        return .init(title: "Refresh Data") { Task { await viewModel.refresh() } }
     }
 
     /// Pull-to-refresh lives here — only when records are actually shown.
