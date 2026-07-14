@@ -115,6 +115,9 @@ public struct RecordsListView: View {
                         }
                     }
             }
+            // Selection is an edit-mode-only affair: outside it, a tap must not
+            // highlight and the two-finger drag must not half-select.
+            .selectionDisabled(!viewModel.isEditing)
         }
         .listStyle(.plain)
         .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
@@ -140,9 +143,9 @@ public struct RecordsListView: View {
             Button(viewModel.isEditing ? "Done" : "Edit") {
                 if viewModel.isEditing { viewModel.cancelEditing() } else { viewModel.isEditing = true }
             }
-            // Nothing to select when the current filter shows no records — but
-            // never disable "Done", or the user could get stuck in edit mode.
-            .disabled(!viewModel.isEditing && viewModel.visibleRecords.isEmpty)
+            // Disabled only when there's nothing to edit at all (no records / error) —
+            // the selected segment doesn't matter. Never disable "Done".
+            .disabled(!viewModel.isEditing && !viewModel.hasRecords)
         }
         // Add stays put in edit mode — tapping it just cancels editing first.
         ToolbarItem(placement: .topBarTrailing) {
