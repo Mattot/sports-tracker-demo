@@ -115,9 +115,6 @@ public struct RecordsListView: View {
                         }
                     }
             }
-            // Selection is an edit-mode-only affair: outside it, a tap must not
-            // highlight and the two-finger drag must not half-select.
-            .selectionDisabled(!viewModel.isEditing)
         }
         .listStyle(.plain)
         .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
