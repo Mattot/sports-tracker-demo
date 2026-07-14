@@ -66,7 +66,7 @@ public struct RecordsListView: View {
                 state: .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
                 action: .init(title: "Try Again") { Task { await viewModel.retry() } }
             )
-        case .empty, .loaded:
+        case .loaded:
             dataView
         }
     }
@@ -100,9 +100,9 @@ public struct RecordsListView: View {
     /// since the empty state has no pull-to-refresh.
     @ViewBuilder
     private var emptyState: some View {
-        let state: ContentStateView.State = viewModel.content == .empty
-            ? .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
-            : .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
+        let state: ContentStateView.State = viewModel.hasRecords
+            ? .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
+            : .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
         ContentStateView(state: state, action: refreshAction)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

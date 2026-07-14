@@ -1,7 +1,7 @@
 /// Primary content state of the list, independent of the offline banner.
+/// No separate `empty` case — `loaded([])` says the same thing.
 public enum RecordsContentState: Sendable, Equatable {
     case loading
-    case empty
     case loaded([SportRecord])
     case failed
 }

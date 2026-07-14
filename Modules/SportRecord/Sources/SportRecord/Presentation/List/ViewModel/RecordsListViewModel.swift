@@ -36,6 +36,10 @@ public final class RecordsListViewModel {
         return records
     }
 
+    /// Whether any records exist at all, regardless of the selected filter — lets
+    /// the view tell "nothing yet" apart from "nothing in this segment".
+    public var hasRecords: Bool { !loadedRecords.isEmpty }
+
     public var visibleRecords: [SportRecord] {
         switch filter {
         case .all:
@@ -49,27 +53,31 @@ public final class RecordsListViewModel {
 
     // MARK: - Loading
 
+    /// The use case yields local records first, then the combined result — apply
+    /// each as it lands so the list paints without waiting on the remote store.
     public func load() async {
         if loadedRecords.isEmpty { content = .loading }
-        // Paint local records immediately so the list isn't blocked waiting on the
-        // (possibly slow/offline) remote store; the combined result replaces it.
-        let localSnapshot = await fetchUseCase.localSnapshot()
-        if loadedRecords.isEmpty, !localSnapshot.isEmpty {
-            content = .loaded(localSnapshot)
+        for await result in fetchUseCase.execute() {
+            applyContent(result)
         }
-        applyContent(await fetchUseCase.execute())
     }
 
     public func refresh() async {
         isRefreshing = true
         defer { isRefreshing = false }
-        let result = await fetchUseCase.execute()
-        remoteUnavailable = result.failedStores.contains(.remote)
+
+        // Only the final (combined) result matters here: applying the local-first
+        // partial would briefly drop the remote rows already on screen.
+        var combined: SportRecordsFetchResult?
+        for await result in fetchUseCase.execute() { combined = result }
+        guard let combined else { return }
+
+        remoteUnavailable = combined.failedStores.contains(.remote)
         // Don't destroy a good list because a refresh couldn't load anything.
-        if result.records.isEmpty, !result.failedStores.isEmpty, !loadedRecords.isEmpty {
+        if combined.records.isEmpty, !combined.failedStores.isEmpty, !loadedRecords.isEmpty {
             return
         }
-        applyContent(result)
+        applyContent(combined)
     }
 
     public func retry() async {
@@ -78,8 +86,10 @@ public final class RecordsListViewModel {
 
     private func applyContent(_ result: SportRecordsFetchResult) {
         remoteUnavailable = result.failedStores.contains(.remote)
-        if result.records.isEmpty {
-            content = result.failedStores.isEmpty ? .empty : .failed
+        // Nothing loaded and at least one store failed => genuine failure.
+        // Otherwise `loaded` — possibly with an empty array.
+        if result.records.isEmpty, !result.failedStores.isEmpty {
+            content = .failed
         } else {
             content = .loaded(result.records)
         }
@@ -120,7 +130,7 @@ public final class RecordsListViewModel {
     private func removeRecords(ids: Set<UUID>) {
         guard case var .loaded(records) = content else { return }
         records.removeAll { ids.contains($0.id) }
-        content = records.isEmpty ? .empty : .loaded(records)
+        content = .loaded(records)
     }
 
     private func message(for stores: Set<StorageType>) -> String {

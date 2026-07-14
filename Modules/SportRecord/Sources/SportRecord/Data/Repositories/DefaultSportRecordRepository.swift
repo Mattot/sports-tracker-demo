@@ -10,24 +10,12 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
         self.remote = remote
     }
 
-    public func fetch() async -> SportRecordsFetchResult {
-        async let localOpt = fetchLocal()
-        async let remoteOpt = fetchRemote()
-        let localRecords = await localOpt
-        let remoteRecords = await remoteOpt
-
-        var records: [SportRecord] = []
-        var failed: Set<StorageType> = []
-
-        if let localRecords { records += localRecords } else { failed.insert(.local) }
-        if let remoteRecords { records += remoteRecords } else { failed.insert(.remote) }
-
-        records.sort { $0.createdAt > $1.createdAt }
-        return SportRecordsFetchResult(records: records, failedStores: failed)
+    public func fetchLocal() async throws -> [SportRecord] {
+        try await local.fetch()
     }
 
-    public func localRecords() async -> [SportRecord] {
-        await fetchLocal() ?? []
+    public func fetchRemote() async throws -> [SportRecord] {
+        try await remote.fetch()
     }
 
     public func save(_ record: SportRecord) async throws {
@@ -51,28 +39,10 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
         if !failed.isEmpty { throw SportRecordsDeleteError(failedStores: failed) }
     }
 
-    // MARK: - Helpers (swallow per-store errors into optional/bool signals)
+    // MARK: - Delete helpers (swallow per-store errors into bool signals)
     //
     // The data sources log the underlying error; here we log the coordinated
-    // degradation decision (which store dropped out / failed to delete).
-
-    private func fetchLocal() async -> [SportRecord]? {
-        do {
-            return try await local.fetch()
-        } catch {
-            Loggers.data.debug("Local fetch failed; excluding local store from results")
-            return nil
-        }
-    }
-
-    private func fetchRemote() async -> [SportRecord]? {
-        do {
-            return try await remote.fetch()
-        } catch {
-            Loggers.data.debug("Remote fetch failed; excluding remote store from results")
-            return nil
-        }
-    }
+    // degradation decision (which store failed to delete).
 
     private func deleteLocal(ids: [UUID]) async -> Bool {
         guard !ids.isEmpty else { return true }

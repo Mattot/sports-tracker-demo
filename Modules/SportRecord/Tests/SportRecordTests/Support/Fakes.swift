@@ -5,21 +5,23 @@ import Core
 /// Fake repository whose fetch/delete behaviour is set per test. Used on the
 /// main actor in tests; mutable state is therefore not synchronized.
 final class FakeSportRecordRepository: SportRecordRepository, @unchecked Sendable {
-    var fetchResult = SportRecordsFetchResult(records: [], failedStores: [])
-    var localRecordsResult: [SportRecord] = []
+    var localRecords: [SportRecord] = []
+    var remoteRecords: [SportRecord] = []
+    var localError: Error?
+    var remoteError: Error?
     var deleteError: SportRecordsDeleteError?
     var saveError: Error?
-    private(set) var fetchCallCount = 0
     private(set) var deletedRecords: [[SportRecord]] = []
     private(set) var savedRecords: [SportRecord] = []
 
-    func fetch() async -> SportRecordsFetchResult {
-        fetchCallCount += 1
-        return fetchResult
+    func fetchLocal() async throws -> [SportRecord] {
+        if let localError { throw localError }
+        return localRecords
     }
 
-    func localRecords() async -> [SportRecord] {
-        localRecordsResult
+    func fetchRemote() async throws -> [SportRecord] {
+        if let remoteError { throw remoteError }
+        return remoteRecords
     }
 
     func save(_ record: SportRecord) async throws {
@@ -74,23 +76,33 @@ final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSou
 
 struct AnyError: Error {}
 
-@MainActor
-final class FakeFetchUseCase: FetchSportRecordsUseCase {
-    var result = SportRecordsFetchResult(records: [], failedStores: [])
-    var localSnapshotResult: [SportRecord] = []
-    /// Optional gate: when set, `execute()` suspends on it — lets a test observe
-    /// the local-snapshot-first state before the combined result arrives.
-    var onExecute: (@MainActor () async -> Void)?
+/// The stream yields `results` in order; the last one is the combined result.
+final class FakeFetchUseCase: FetchSportRecordsUseCase, @unchecked Sendable {
+    var results: [SportRecordsFetchResult] = []
+    /// Optional gate awaited just before the final yield, so a test can observe
+    /// the intermediate (local-first) state.
+    var beforeFinalYield: (@Sendable () async -> Void)?
     private(set) var callCount = 0
 
-    func execute() async -> SportRecordsFetchResult {
-        callCount += 1
-        if let onExecute { await onExecute() }
-        return result
+    /// Convenience for tests that only care about the combined result.
+    var result: SportRecordsFetchResult {
+        get { results.last ?? SportRecordsFetchResult(records: [], failedStores: []) }
+        set { results = [newValue] }
     }
 
-    func localSnapshot() async -> [SportRecord] {
-        localSnapshotResult
+    func execute() -> AsyncStream<SportRecordsFetchResult> {
+        callCount += 1
+        let results = self.results
+        let gate = self.beforeFinalYield
+        return AsyncStream { continuation in
+            Task {
+                for (index, result) in results.enumerated() {
+                    if index == results.count - 1, let gate { await gate() }
+                    continuation.yield(result)
+                }
+                continuation.finish()
+            }
+        }
     }
 }
 

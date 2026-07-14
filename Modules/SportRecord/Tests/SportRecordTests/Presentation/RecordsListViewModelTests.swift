@@ -23,10 +23,11 @@ private func makeSUT(
     #expect(sut.content == .loaded([record]))
 }
 
-@Test @MainActor func loadWithNoRecordsAndNoFailureBecomesEmpty() async {
+@Test @MainActor func loadWithNoRecordsAndNoFailureBecomesLoadedEmpty() async {
     let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [], failedStores: []))
     await sut.load()
-    #expect(sut.content == .empty)
+    #expect(sut.content == .loaded([]))
+    #expect(sut.hasRecords == false)
 }
 
 @Test @MainActor func loadWithNoRecordsAndBothFailedBecomesFailed() async {
@@ -43,17 +44,19 @@ private func makeSUT(
 
 // MARK: progressive local-first load
 
-@Test @MainActor func loadShowsLocalSnapshotBeforeRemoteCompletes() async {
+@Test @MainActor func loadAppliesLocalFirstYieldBeforeCombined() async {
     let local = Sample.record(storage: .local)
     let remote = Sample.record(storage: .remote)
     let (sut, fetch, _, _) = makeSUT()
-    fetch.localSnapshotResult = [local]
-    fetch.result = .init(records: [local, remote], failedStores: [])
+    fetch.results = [
+        .init(records: [local], failedStores: []),            // first paint: local only
+        .init(records: [local, remote], failedStores: []),    // combined
+    ]
     let gate = MainActorGate()
-    fetch.onExecute = { await gate.wait() }
+    fetch.beforeFinalYield = { await gate.wait() }
 
     let task = Task { await sut.load() }
-    // While the combined fetch (execute) is gated, the local snapshot is shown.
+    // While the combined yield is gated, the local-first result is on screen.
     for _ in 0..<1000 where sut.visibleRecords.count != 1 { await Task.yield() }
     #expect(sut.visibleRecords.map(\.id) == [local.id])
 
@@ -62,21 +65,26 @@ private func makeSUT(
     #expect(Set(sut.visibleRecords.map(\.id)) == [local.id, remote.id])
 }
 
-@Test @MainActor func loadIgnoresLocalSnapshotWhenAlreadyLoaded() async {
-    let existing = Sample.record(storage: .remote)
-    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [existing], failedStores: []))
-    await sut.load()   // content is now .loaded([existing])
+@Test @MainActor func refreshAppliesOnlyTheCombinedResult() async {
+    let local = Sample.record(storage: .local)
+    let remote = Sample.record(storage: .remote)
+    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [local, remote], failedStores: []))
+    await sut.load()   // both rows on screen
 
-    // A reload's snapshot must not overwrite the shown list before the combined result.
-    fetch.localSnapshotResult = [Sample.record(name: "Snapshot", storage: .local)]
+    // A refresh must not flash back to local-only before the combined result lands.
+    fetch.results = [
+        .init(records: [local], failedStores: []),
+        .init(records: [local, remote], failedStores: []),
+    ]
     let gate = MainActorGate()
-    fetch.onExecute = { await gate.wait() }
-    let task = Task { await sut.load() }
+    fetch.beforeFinalYield = { await gate.wait() }
+    let task = Task { await sut.refresh() }
     await Task.yield(); await Task.yield()
-    #expect(sut.visibleRecords.map(\.id) == [existing.id])   // unchanged while gated
+    #expect(sut.visibleRecords.count == 2)   // still both while the local-first yield is in flight
 
     gate.release()
     await task.value
+    #expect(sut.visibleRecords.count == 2)
 }
 
 // MARK: filter
@@ -134,7 +142,7 @@ private func makeSUT(
     let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [record], failedStores: []))
     await sut.load()
     await sut.delete(record)
-    #expect(sut.content == .empty)
+    #expect(sut.content == .loaded([]))
     #expect(sut.deleteError == nil)
 }
 
@@ -158,7 +166,7 @@ private func makeSUT(
     sut.isEditing = true
     sut.selection = [a.id, b.id]
     await sut.deleteSelected()
-    #expect(sut.content == .empty)
+    #expect(sut.content == .loaded([]))
     #expect(sut.selection.isEmpty)
     #expect(sut.isEditing == false)
 }
