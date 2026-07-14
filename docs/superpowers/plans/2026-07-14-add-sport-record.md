@@ -455,6 +455,31 @@ private func makeSUT() -> (AddRecordViewModel, FakeSaveSportRecordUseCase) {
     #expect(!ok)
     #expect(save.saved.isEmpty)
 }
+
+@Test @MainActor func saveFailureLocalSetsLocalMessage() async {
+    let (sut, save) = makeSUT()
+    save.errorToThrow = AnyError()
+    sut.name = "Run"; sut.location = "Park"; sut.minutes = 10; sut.storageType = .local
+
+    let ok = await sut.save()
+
+    #expect(!ok)
+    #expect(sut.saveError?.contains("locally") == true)   // local-specific message
+}
+
+@Test @MainActor func saveSuccessClearsPriorError() async {
+    let (sut, save) = makeSUT()
+    save.errorToThrow = AnyError()
+    sut.name = "Run"; sut.location = "Park"; sut.minutes = 10
+    _ = await sut.save()
+    #expect(sut.saveError != nil)
+
+    save.errorToThrow = nil
+    let ok = await sut.save()
+
+    #expect(ok)
+    #expect(sut.saveError == nil)
+}
 ```
 
 - [ ] **Step 2: Run to verify it fails**
@@ -502,6 +527,7 @@ public final class AddRecordViewModel {
     /// form intact for retry.
     public func save() async -> Bool {
         guard canSave else { return false }
+        saveError = nil
         isSaving = true
         defer { isSaving = false }
 
