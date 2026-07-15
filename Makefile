@@ -6,6 +6,9 @@ SCHEME        := SportsTracker
 BUILD_DEST    := generic/platform=iOS Simulator
 TEST_DEST     := platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5
 XCFLAGS       := -skipPackagePluginValidation
+# Pin the test run to English so locale-sensitive assertions (localized strings)
+# are deterministic regardless of the host/simulator language.
+TESTFLAGS     := -testLanguage en -testRegion US
 FORMAT_PATHS  := Modules/Core/Sources Modules/SportRecord/Sources SportsTracker/SportsTracker
 FORMAT_CONFIG := --configuration .swift-format
 
@@ -19,10 +22,10 @@ build:
 test: test-core test-sportrecord
 
 test-core:
-	cd Modules/Core && xcodebuild test -scheme Core -destination '$(TEST_DEST)' $(XCFLAGS)
+	cd Modules/Core && xcodebuild test -scheme Core -destination '$(TEST_DEST)' $(XCFLAGS) $(TESTFLAGS)
 
 test-sportrecord:
-	cd Modules/SportRecord && xcodebuild test -scheme SportRecord -destination '$(TEST_DEST)' $(XCFLAGS)
+	cd Modules/SportRecord && xcodebuild test -scheme SportRecord -destination '$(TEST_DEST)' $(XCFLAGS) $(TESTFLAGS)
 
 # Lint everything with the SwiftLint CLI
 lint:
