@@ -41,7 +41,8 @@ Select the **SportsTracker** scheme and an iOS 18.6+ simulator, then Run.
 The repository is deliberately **zero-setup**:
 
 - the Firebase configuration (`GoogleService-Info.plist`) is committed,
-- dependency versions are pinned by the committed `Package.resolved` — Swift Package Manager resolves everything on first open.
+- dependency versions are pinned by the committed `Package.resolved` — Swift Package Manager resolves everything on first open,
+- [`firestore.rules`](firestore.rules) allows open read/write with no auth — fine for this demo's testing simplicity, not a pattern to carry into a production backend.
 
 ### Command line
 
