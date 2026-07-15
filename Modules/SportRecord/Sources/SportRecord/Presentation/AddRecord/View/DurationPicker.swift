@@ -8,9 +8,9 @@ struct DurationPicker: View {
 
     var body: some View {
         HStack(spacing: 0) {
-            wheel($hours, range: 0..<24, unit: L10n.AddRecord.Duration.hours)
-            wheel($minutes, range: 0..<60, unit: L10n.AddRecord.Duration.minutes)
-            wheel($seconds, range: 0..<60, unit: L10n.AddRecord.Duration.seconds)
+            wheel($hours, range: 0..<24, unit: L10n.AddRecord.durationHours)
+            wheel($minutes, range: 0..<60, unit: L10n.AddRecord.durationMinutes)
+            wheel($seconds, range: 0..<60, unit: L10n.AddRecord.durationSeconds)
         }
         .frame(maxWidth: .infinity)
     }

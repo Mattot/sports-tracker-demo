@@ -63,12 +63,9 @@ enum L10n {
         static var saveErrorTitle: String { str("addRecord.saveError.title") }
         static var saveErrorRemote: String { str("addRecord.saveError.remote") }
         static var saveErrorLocal: String { str("addRecord.saveError.local") }
-
-        enum Duration {
-            static var hours: String { str("addRecord.duration.hours") }
-            static var minutes: String { str("addRecord.duration.minutes") }
-            static var seconds: String { str("addRecord.duration.seconds") }
-        }
+        static var durationHours: String { str("addRecord.duration.hours") }
+        static var durationMinutes: String { str("addRecord.duration.minutes") }
+        static var durationSeconds: String { str("addRecord.duration.seconds") }
     }
 
     enum Storage {
