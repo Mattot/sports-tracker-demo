@@ -13,22 +13,21 @@ Sports Tracker — a SwiftUI iOS app recording sport performances to local stora
 
 ## Commands
 
-Build the app (repo root; expect `** BUILD SUCCEEDED **`):
+The [Makefile](Makefile) is the task runner (repo root):
 
 ```bash
-xcodebuild build -project SportsTracker/SportsTracker.xcodeproj -scheme SportsTracker -destination 'generic/platform=iOS Simulator' -skipPackagePluginValidation
+make build          # build the app; expect ** BUILD SUCCEEDED **
+make test           # both package suites (make test-core / make test-sportrecord for one)
+make lint           # SwiftLint CLI over the repo
+make format         # swift-format the sources in place
+make format-check   # verify formatting without writing; make ci runs the full pipeline
 ```
 
-Test a package (run from the package directory, not the repo root):
+These wrap `xcodebuild` / `swiftlint` / `swift format` and pass `-skipPackagePluginValidation`, which stops SwiftLint's build-tool plugin from prompting for trust in non-interactive runs. For a different simulator, override `BUILD_DEST` / `TEST_DEST` in the Makefile or call `xcodebuild` directly.
 
-```bash
-cd Modules/SportRecord   # or Modules/Core
-xcodebuild test -scheme SportRecord -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' -skipPackagePluginValidation   # scheme Core for Modules/Core
-```
+SwiftLint (SimplyDanny/SwiftLintPlugins, pinned 0.65.0) also runs as an SPM build-tool plugin on the `Core` and `SportRecord` source targets on every build; the shared ruleset is `.swiftlint.yml` at the repo root, inherited per package via `parent_config`. Formatting is Apple `swift-format` (`.swift-format`).
 
-`-skipPackagePluginValidation` keeps SwiftLint's build-tool plugin from prompting for trust in non-interactive runs. SwiftLint (realm/SwiftLint, pinned to 0.65.0) runs as an SPM build-tool plugin on the `Core` and `SportRecord` source targets; the shared ruleset is `.swiftlint.yml` at the repo root, inherited by each package via `parent_config`. Formatting is Apple `swift-format` (`.swift-format`).
-
-Destination notes: with several simulator runtimes installed, a bare device name is ambiguous — keep the `OS=` qualifier (`xcrun simctl list devices available` shows what exists). The app scheme needs an iOS 18.6+ destination; the packages accept iOS 18.0+.
+Destination notes: the Makefile pins tests to `iPhone 16 Pro, OS=18.5`, and the app scheme needs an iOS 18.6+ destination (packages accept iOS 18.0+). With several simulator runtimes installed a bare device name is ambiguous — keep the `OS=` qualifier (`xcrun simctl list devices available` shows what exists).
 
 ## Architecture rules
 
