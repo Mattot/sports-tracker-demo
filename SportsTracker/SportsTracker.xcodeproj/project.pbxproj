@@ -32,15 +32,11 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		76FAE9033005923A0020BCD0 /* SportsTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SportsTracker;
 			sourceTree = "<group>";
 		};
 		76FAE9113005923C0020BCD0 /* SportsTrackerTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-			);
 			path = SportsTrackerTests;
 			sourceTree = "<group>";
 		};
@@ -172,12 +168,14 @@
 			knownRegions = (
 				en,
 				Base,
+				cs,
+				sk,
 			);
 			mainGroup = 76FAE8F83005923A0020BCD0;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "Core" */,
-				76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "SportRecord" */,
+				76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "../Modules/Core" */,
+				76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "../Modules/SportRecord" */,
 				76FAE931300594DA0020BCD0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				76FAE936300595460020BCD0 /* XCRemoteSwiftPackageReference "Factory" */,
 				76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
@@ -230,7 +228,7 @@
 /* Begin PBXTargetDependency section */
 		76D381AE3007E19B007BA710 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 76D381AD3007E19B007BA710 /* plugin:SwiftLintBuildToolPlugin */;
+			productRef = 76D381AD3007E19B007BA710 /* SwiftLintBuildToolPlugin */;
 		};
 		76FAE9103005923C0020BCD0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -510,11 +508,11 @@
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "Core" */ = {
+		76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "../Modules/Core" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Modules/Core;
 		};
-		76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "SportRecord" */ = {
+		76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "../Modules/SportRecord" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Modules/SportRecord;
 		};
@@ -548,7 +546,7 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		76D381AD3007E19B007BA710 /* plugin:SwiftLintBuildToolPlugin */ = {
+		76D381AD3007E19B007BA710 /* SwiftLintBuildToolPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
 			productName = "plugin:SwiftLintBuildToolPlugin";

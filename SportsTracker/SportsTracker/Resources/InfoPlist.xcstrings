@@ -1,0 +1,14 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "CFBundleDisplayName" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "SportsTracker" } },
+        "cs" : { "stringUnit" : { "state" : "translated", "value" : "SportsTracker" } },
+        "sk" : { "stringUnit" : { "state" : "translated", "value" : "SportsTracker" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
