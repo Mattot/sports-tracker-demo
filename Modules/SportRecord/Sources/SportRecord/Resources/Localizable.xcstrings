@@ -7,7 +7,143 @@
         "cs" : { "stringUnit" : { "state" : "translated", "value" : "Sportovní záznamy" } },
         "sk" : { "stringUnit" : { "state" : "translated", "value" : "Športové záznamy" } }
       }
-    }
+    },
+    "list.deleteError.title" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete failed" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Smazání se nezdařilo" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Odstránenie zlyhalo" } }
+    } },
+    "list.loadError.title" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't Load Records" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Nepodařilo se načíst záznamy" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Nepodarilo sa načítať záznamy" } }
+    } },
+    "list.loadError.message" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Something went wrong reaching your data." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Při načítání dat došlo k chybě." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Pri načítaní údajov došlo k chybe." } }
+    } },
+    "list.empty.title" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "No Sport Records" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Žádné sportovní záznamy" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Žiadne športové záznamy" } }
+    } },
+    "list.empty.message" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Add your first activity to see it here." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Přidejte svou první aktivitu a zobrazí se zde." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Pridajte svoju prvú aktivitu a zobrazí sa tu." } }
+    } },
+    "list.empty.filtered.title" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "No %@ Records" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Žádné %@ záznamy" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Žiadne %@ záznamy" } }
+    } },
+    "list.empty.filtered.message" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "You have no %@ records yet." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Zatím nemáte žádné %@ záznamy." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Zatiaľ nemáte žiadne %@ záznamy." } }
+    } },
+    "list.banner.offline" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "You're offline — showing local records." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Jste offline — zobrazují se místní záznamy." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Ste offline — zobrazujú sa miestne záznamy." } }
+    } },
+    "list.banner.remoteUnavailable" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't reach remote — showing local records." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Vzdálené úložiště není dostupné — zobrazují se místní záznamy." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Vzdialené úložisko nie je dostupné — zobrazujú sa miestne záznamy." } }
+    } },
+    "list.add.button" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Record" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Přidat záznam" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Pridať záznam" } }
+    } },
+    "list.deleteSelection.button" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Records (%lld)" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Smazat záznamy (%lld)" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Odstrániť záznamy (%lld)" } }
+    } },
+    "list.deleteConfirm.title %lld" : { "localizations" : {
+      "en" : { "variations" : { "plural" : {
+        "one" : { "stringUnit" : { "state" : "translated", "value" : "Delete %lld record?" } },
+        "other" : { "stringUnit" : { "state" : "translated", "value" : "Delete %lld records?" } }
+      } } },
+      "cs" : { "variations" : { "plural" : {
+        "one" : { "stringUnit" : { "state" : "translated", "value" : "Smazat %lld záznam?" } },
+        "few" : { "stringUnit" : { "state" : "translated", "value" : "Smazat %lld záznamy?" } },
+        "other" : { "stringUnit" : { "state" : "translated", "value" : "Smazat %lld záznamů?" } }
+      } } },
+      "sk" : { "variations" : { "plural" : {
+        "one" : { "stringUnit" : { "state" : "translated", "value" : "Odstrániť %lld záznam?" } },
+        "few" : { "stringUnit" : { "state" : "translated", "value" : "Odstrániť %lld záznamy?" } },
+        "other" : { "stringUnit" : { "state" : "translated", "value" : "Odstrániť %lld záznamov?" } }
+      } } }
+    } },
+    "list.deleteError.both" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't delete some records. Check your connection and try again." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Některé záznamy se nepodařilo smazat. Zkontrolujte připojení a zkuste to znovu." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Niektoré záznamy sa nepodarilo odstrániť. Skontrolujte pripojenie a skúste to znova." } }
+    } },
+    "list.deleteError.remote" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't delete remote records. You may be offline." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Vzdálené záznamy se nepodařilo smazat. Možná jste offline." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Vzdialené záznamy sa nepodarilo odstrániť. Možno ste offline." } }
+    } },
+    "list.deleteError.local" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't delete local records. Please try again." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Místní záznamy se nepodařilo smazat. Zkuste to prosím znovu." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Miestne záznamy sa nepodarilo odstrániť. Skúste to prosím znova." } }
+    } },
+    "list.deleteError.unknown" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't delete records." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Záznamy se nepodařilo smazat." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Záznamy sa nepodarilo odstrániť." } }
+    } },
+    "filter.all" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "All" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Všechny" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Všetky" } }
+    } },
+    "filter.local" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Local" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Místní" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Miestne" } }
+    } },
+    "filter.remote" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Vzdálené" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Vzdialené" } }
+    } },
+    "common.ok" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "OK" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "OK" } }
+    } },
+    "common.cancel" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Cancel" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Zrušit" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Zrušiť" } }
+    } },
+    "common.delete" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Smazat" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Odstrániť" } }
+    } },
+    "common.done" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Done" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Hotovo" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Hotovo" } }
+    } },
+    "common.edit" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Edit" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Upravit" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Upraviť" } }
+    } },
+    "common.tryAgain" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Try Again" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Zkusit znovu" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Skúsiť znova" } }
+    } }
   },
   "version" : "1.0"
 }

@@ -142,10 +142,10 @@ public final class RecordsListViewModel {
 
     private func message(for stores: Set<StorageType>) -> String {
         switch (stores.contains(.local), stores.contains(.remote)) {
-        case (true, true): "Couldn't delete some records. Check your connection and try again."
-        case (false, true): "Couldn't delete remote records. You may be offline."
-        case (true, false): "Couldn't delete local records. Please try again."
-        case (false, false): "Couldn't delete records."
+        case (true, true): L10n.List.deleteErrorBoth
+        case (false, true): L10n.List.deleteErrorRemote
+        case (true, false): L10n.List.deleteErrorLocal
+        case (false, false): L10n.List.deleteErrorUnknown
         }
     }
 

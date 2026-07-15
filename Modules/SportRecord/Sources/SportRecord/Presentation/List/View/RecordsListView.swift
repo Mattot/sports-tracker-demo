@@ -21,16 +21,16 @@ public struct RecordsListView: View {
     // stack, so navigation state (path, title, toolbar) stays composed in App.
     public var body: some View {
         content
-            .navigationTitle("Sport Records")
+            .navigationTitle(L10n.List.title)
             .toolbar { toolbarContent }
             .alert(
-                "Delete failed",
+                L10n.List.deleteFailedTitle,
                 isPresented: Binding(
                     get: { viewModel.deleteError != nil },
                     set: { if !$0 { viewModel.deleteError = nil } }
                 )
             ) {
-                Button("OK", role: .cancel) {}
+                Button(L10n.Common.ok, role: .cancel) {}
             } message: {
                 Text(viewModel.deleteError ?? "")
             }
@@ -55,8 +55,8 @@ public struct RecordsListView: View {
             ContentStateView(state: .loading)
         case .failed:
             ContentStateView(
-                state: .failed(title: "Couldn't Load Records", message: "Something went wrong reaching your data."),
-                action: .init(title: "Try Again") { Task { await viewModel.retry() } }
+                state: .failed(title: L10n.List.loadErrorTitle, message: L10n.List.loadErrorMessage),
+                action: .init(title: L10n.Common.tryAgain) { Task { await viewModel.retry() } }
             )
         case .loaded:
             recordsList
@@ -81,7 +81,7 @@ public struct RecordsListView: View {
                                 Button(role: .destructive) {
                                     Task { await viewModel.delete(record) }
                                 } label: {
-                                    Label("Delete", systemImage: "trash")
+                                    Label(L10n.Common.delete, systemImage: "trash")
                                 }
                             }
                     }
@@ -125,10 +125,10 @@ public struct RecordsListView: View {
         let state: ContentStateView.State =
             viewModel.hasRecords
             ? .empty(
-                title: "No \(viewModel.filter.title) Records",
-                message: "You have no \(viewModel.filter.title.lowercased()) records yet."
+                title: L10n.List.emptyFilteredTitle(viewModel.filter.title),
+                message: L10n.List.emptyFilteredMessage(viewModel.filter.title.lowercased())
             )
-            : .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
+            : .empty(title: L10n.List.emptyTitle, message: L10n.List.emptyMessage)
         ContentStateView(state: state)
             .frame(maxWidth: .infinity, minHeight: listHeight)
             .listRowSeparator(.hidden)
@@ -141,9 +141,9 @@ public struct RecordsListView: View {
     @ViewBuilder
     private var banner: some View {
         if viewModel.isOffline {
-            bannerRow("You're offline — showing local records.", style: .warning)
+            bannerRow(L10n.List.bannerOffline, style: .warning)
         } else if viewModel.remoteUnavailable {
-            bannerRow("Couldn't reach remote — showing local records.", style: .info)
+            bannerRow(L10n.List.bannerRemoteUnavailable, style: .info)
         }
     }
 
@@ -159,7 +159,7 @@ public struct RecordsListView: View {
     @ToolbarContentBuilder
     private var toolbarContent: some ToolbarContent {
         ToolbarItem(placement: .topBarLeading) {
-            Button(viewModel.isEditing ? "Done" : "Edit") {
+            Button(viewModel.isEditing ? L10n.Common.done : L10n.Common.edit) {
                 withAnimation {
                     if viewModel.isEditing {
                         viewModel.cancelEditing()
@@ -178,7 +178,7 @@ public struct RecordsListView: View {
                 viewModel.cancelEditing()
                 onAddRecord { Task { await viewModel.load() } }
             } label: {
-                Label("Add Record", systemImage: "plus")
+                Label(L10n.List.addButton, systemImage: "plus")
             }
         }
         // Delete lives in the bottom bar while editing; the confirmation hangs off
@@ -188,18 +188,18 @@ public struct RecordsListView: View {
                 Button(role: .destructive) {
                     viewModel.requestDeleteSelection()
                 } label: {
-                    Text("Delete Records (\(viewModel.selection.count))")
+                    Text(L10n.List.deleteSelectionButton(viewModel.selection.count))
                 }
                 .disabled(viewModel.selection.isEmpty)
                 .confirmationDialog(
-                    "Delete \(viewModel.selection.count) record(s)?",
+                    L10n.List.deleteConfirmTitle(viewModel.selection.count),
                     isPresented: $viewModel.isDeleteConfirmationPresented,
                     titleVisibility: .visible
                 ) {
-                    Button("Delete", role: .destructive) {
+                    Button(L10n.Common.delete, role: .destructive) {
                         Task { await viewModel.deleteSelected() }
                     }
-                    Button("Cancel", role: .cancel) {}
+                    Button(L10n.Common.cancel, role: .cancel) {}
                 }
             }
         }

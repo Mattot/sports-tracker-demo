@@ -16,9 +16,9 @@ public enum RecordsFilter: String, CaseIterable, Sendable, Identifiable {
 
     public var title: String {
         switch self {
-        case .all: "All"
-        case .local: "Local"
-        case .remote: "Remote"
+        case .all: L10n.Filter.all
+        case .local: L10n.Filter.local
+        case .remote: L10n.Filter.remote
         }
     }
 }
