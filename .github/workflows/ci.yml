@@ -5,6 +5,13 @@ on:
   push:
     branches: [main]
 
+# Cancel a run when a newer commit lands on the same branch/PR, but never
+# across different branches/PRs — github.ref is unique per branch and per
+# PR (refs/pull/<number>/merge), so unrelated runs never share a group.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   check:
     runs-on: macos-26
