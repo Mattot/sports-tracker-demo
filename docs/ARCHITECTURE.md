@@ -48,7 +48,10 @@ Modules/SportRecord/Sources/SportRecord/
 │   ├── AddRecord/
 │   │   ├── View/
 │   │   └── ViewModel/
+│   ├── Localization/      # L10n.swift — typed accessor resolving keys against Bundle.module
 │   └── Shared/            # presentation helpers shared across screens
+├── Resources/
+│   └── Localizable.xcstrings  # module's String Catalog — en source + cs/sk translations
 └── Composition/           # public factory seam the app's DI container composes from
 
 Modules/SportRecord/Tests/SportRecordTests/
@@ -68,6 +71,8 @@ SportsTracker/SportsTracker/
 ```
 
 New files go into the directory matching their layer; a new screen gets its own `Presentation/<Screen>/View|ViewModel` pair; tests mirror the source layout.
+
+User-facing strings live only in `Presentation/`, are keyed in the catalog, and are read through `L10n`; nothing outside `Presentation/` imports `L10n`.
 
 ## Data flow
 

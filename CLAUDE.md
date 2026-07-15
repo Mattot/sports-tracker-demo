@@ -45,6 +45,7 @@ Destination notes: the Makefile pins tests to `iPhone 16 Pro, OS=18.5`, and the 
 - Swift 6 strict concurrency must stay warning-free (`@ModelActor` for SwiftData I/O, `Sendable` across boundaries).
 - Typed throws for domain failure modes (see `SportRecordsDeleteError`).
 - Conventional commits scoped as in history: `feat(sportrecord):`, `feat(app):`, `refactor(sportrecord):`, `docs:`, `chore(sportrecord):`.
+- Localization: per-module String Catalog at `Sources/<Module>/Resources/Localizable.xcstrings` (`en` source + `cs`/`sk`), resolved via `Bundle.module` behind a typed `L10n` enum in `Presentation/Localization/`. Keys are dotted `lowerCamelCase` with no feature prefix (`list.title`, `storageType.remote`, `common.ok`); common strings stay under `common.*` until a second module needs them. Adding a locale is catalog-only. The App target declares supported languages (`knownRegions` + `InfoPlist.xcstrings` → `CFBundleLocalizations`) so iOS shows the per-app language switcher.
 
 ## Gotchas
 
