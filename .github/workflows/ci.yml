@@ -26,8 +26,10 @@ jobs:
       - name: Build
         run: make build
 
+      # macos-26 only ships iOS 26.x simulators; override the Makefile's
+      # default iPhone 16 Pro/OS 18.5 destination, which isn't available here.
       - name: Core package tests
-        run: make test-core
+        run: make test-core TEST_DEST='platform=iOS Simulator,name=iPhone 17,OS=26.5'
 
       - name: SportRecord package tests
-        run: make test-sportrecord
+        run: make test-sportrecord TEST_DEST='platform=iOS Simulator,name=iPhone 17,OS=26.5'
