@@ -4,9 +4,36 @@
     "CFBundleDisplayName" : {
       "extractionState" : "manual",
       "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "SportsTracker" } },
-        "cs" : { "stringUnit" : { "state" : "translated", "value" : "SportsTracker" } },
-        "sk" : { "stringUnit" : { "state" : "translated", "value" : "SportsTracker" } }
+        "cs" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SportsTracker"
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SportsTracker"
+          }
+        },
+        "sk" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SportsTracker"
+          }
+        }
+      }
+    },
+    "CFBundleName" : {
+      "comment" : "Bundle name",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "SportsTracker"
+          }
+        }
       }
     }
   },
