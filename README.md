@@ -45,26 +45,35 @@ The repository is deliberately **zero-setup**:
 
 ### Command line
 
-Build the app (from the repo root):
+Common tasks are wrapped in a [`Makefile`](Makefile) (run from the repo root):
+
+| Command | Does |
+|---|---|
+| `make build` | Build the app |
+| `make test` | Run both package test suites |
+| `make lint` | Lint with the SwiftLint CLI |
+| `make format` | Format sources in place with swift-format |
+| `make format-check` | Verify formatting without writing (fails on diffs) |
+| `make ci` | `format-check` → `lint` → `build` → `test` |
+
+Linting also runs automatically at build time via the SwiftLint SPM plugin (pinned to 0.65.0). `make lint` additionally needs the SwiftLint CLI (`brew install swiftlint`); formatting uses the `swift format` bundled with the Xcode toolchain.
+
+The underlying commands, if you'd rather run them directly:
 
 ```bash
+# Build the app
 xcodebuild build -project SportsTracker/SportsTracker.xcodeproj -scheme SportsTracker \
-  -destination 'generic/platform=iOS Simulator'
-```
-
-Run the tests (each package has its own suite):
-
-```bash
-cd Modules/SportRecord
-xcodebuild test -scheme SportRecord -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'
+  -destination 'generic/platform=iOS Simulator' -skipPackagePluginValidation
 ```
 
 ```bash
-cd Modules/Core
-xcodebuild test -scheme Core -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'
+# Test a package (each has its own suite)
+cd Modules/SportRecord   # or Modules/Core (scheme Core)
+xcodebuild test -scheme SportRecord \
+  -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' -skipPackagePluginValidation
 ```
 
-Use any installed iOS 18+ simulator (`xcrun simctl list devices available`). If several simulator runtimes are installed, keep the `OS=` qualifier — a bare device name is ambiguous and `xcodebuild` rejects it.
+`-skipPackagePluginValidation` keeps the SwiftLint build-tool plugin from prompting for trust in non-interactive runs. Use any installed iOS 18+ simulator (`xcrun simctl list devices available`); if several simulator runtimes are installed, keep the `OS=` qualifier — a bare device name is ambiguous and `xcodebuild` rejects it.
 
 ## Navigation Flow — and Why
 
