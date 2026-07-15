@@ -91,6 +91,7 @@ public struct RecordsListView: View {
             }
         }
         .listStyle(.plain)
+        .listSectionSpacing(0)   // no gap between the banner row and the filter header
         .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
         .refreshable { await viewModel.refresh() }
         .background {
