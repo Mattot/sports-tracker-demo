@@ -17,7 +17,7 @@ The [Makefile](Makefile) is the task runner (repo root):
 
 ```bash
 make build          # build the app; expect ** BUILD SUCCEEDED **
-make test           # both package suites (make test-core / make test-sportrecord for one)
+make test           # SportRecord package suite (alias for make test-sportrecord)
 make lint           # SwiftLint CLI over the repo
 make format         # swift-format the sources in place
 make format-check   # verify formatting without writing; make ci runs the full pipeline

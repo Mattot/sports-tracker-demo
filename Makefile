@@ -1,5 +1,5 @@
 # Sports Tracker — developer tasks.
-# Targets: build · test (test-core, test-sportrecord) · lint · format · format-check · ci
+# Targets: build · test (test-sportrecord) · lint · format · format-check · ci
 
 PROJECT       := SportsTracker/SportsTracker.xcodeproj
 SCHEME        := SportsTracker
@@ -12,17 +12,14 @@ TESTFLAGS     := -testLanguage en -testRegion US
 FORMAT_PATHS  := Modules/Core/Sources Modules/SportRecord/Sources SportsTracker/SportsTracker
 FORMAT_CONFIG := --configuration .swift-format
 
-.PHONY: build test test-core test-sportrecord lint format format-check ci
+.PHONY: build test test-sportrecord lint format format-check ci
 
 # Build the app (runs the SwiftLint plugin)
 build:
 	xcodebuild build -project $(PROJECT) -scheme $(SCHEME) -destination '$(BUILD_DEST)' $(XCFLAGS)
 
 # Run all package tests
-test: test-core test-sportrecord
-
-test-core:
-	cd Modules/Core && xcodebuild test -scheme Core -destination '$(TEST_DEST)' $(XCFLAGS) $(TESTFLAGS)
+test: test-sportrecord
 
 test-sportrecord:
 	cd Modules/SportRecord && xcodebuild test -scheme SportRecord -destination '$(TEST_DEST)' $(XCFLAGS) $(TESTFLAGS)

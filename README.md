@@ -57,7 +57,7 @@ Common tasks are wrapped in a [`Makefile`](Makefile) (run from the repo root):
 | `make format-check` | Verify formatting without writing (fails on diffs) |
 | `make ci` | `format-check` → `lint` → `build` → `test` |
 
-`make build` expects `** BUILD SUCCEEDED **`; `make test` runs `make test-core` and `make test-sportrecord` (invoke either alone for one package). Linting also runs automatically at build time via the SwiftLint SPM plugin (pinned to 0.65.0). `make lint` additionally needs the SwiftLint CLI (`brew install swiftlint`); formatting uses the `swift format` bundled with the Xcode toolchain.
+`make build` expects `** BUILD SUCCEEDED **`; `make test` runs `make test-sportrecord` (Core has no test target — it's Apple-framework-only glue code with nothing to unit test). Linting also runs automatically at build time via the SwiftLint SPM plugin (pinned to 0.65.0). `make lint` additionally needs the SwiftLint CLI (`brew install swiftlint`); formatting uses the `swift format` bundled with the Xcode toolchain.
 
 The targets wrap `xcodebuild` with `-skipPackagePluginValidation` (which stops the SwiftLint build-tool plugin from prompting for trust in non-interactive runs) and pin the test simulator to `iPhone 16 Pro, OS=18.5`. To target a different simulator, override `BUILD_DEST` / `TEST_DEST` in the [`Makefile`](Makefile) — any installed iOS 18+ simulator works (`xcrun simctl list devices available`); keep the `OS=` qualifier, since a bare device name is ambiguous and `xcodebuild` rejects it.
 
