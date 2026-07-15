@@ -5,9 +5,9 @@
 //  Created by Matúš Selecký on 13/07/2026.
 //
 
-import SwiftUI
 import FactoryKit
 import FirebaseCore
+import SwiftUI
 
 @main
 struct SportsTrackerApp: App {

@@ -1,5 +1,5 @@
-import SwiftUI
 import Core
+import SwiftUI
 
 public struct RecordsListView: View {
     @State private var viewModel: RecordsListViewModel
@@ -91,7 +91,7 @@ public struct RecordsListView: View {
             }
         }
         .listStyle(.plain)
-        .listSectionSpacing(0)   // no gap between the banner row and the filter header
+        .listSectionSpacing(0)  // no gap between the banner row and the filter header
         .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
         .refreshable { await viewModel.refresh() }
         .background {
@@ -122,8 +122,12 @@ public struct RecordsListView: View {
     /// mode can't select it.
     @ViewBuilder
     private var emptyRow: some View {
-        let state: ContentStateView.State = viewModel.hasRecords
-            ? .empty(title: "No \(viewModel.filter.title) Records", message: "You have no \(viewModel.filter.title.lowercased()) records yet.")
+        let state: ContentStateView.State =
+            viewModel.hasRecords
+            ? .empty(
+                title: "No \(viewModel.filter.title) Records",
+                message: "You have no \(viewModel.filter.title.lowercased()) records yet."
+            )
             : .empty(title: "No Sport Records", message: "Add your first activity to see it here.")
         ContentStateView(state: state)
             .frame(maxWidth: .infinity, minHeight: listHeight)

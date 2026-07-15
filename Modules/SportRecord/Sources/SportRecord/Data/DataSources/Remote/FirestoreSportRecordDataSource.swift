@@ -1,6 +1,6 @@
-import Foundation
-import FirebaseFirestore
 import Core
+import FirebaseFirestore
+import Foundation
 
 /// Remote store gateway backed by Firestore. Document ID == record UUID.
 struct FirestoreSportRecordDataSource: RemoteSportRecordDataSource {
@@ -12,7 +12,8 @@ struct FirestoreSportRecordDataSource: RemoteSportRecordDataSource {
 
     func fetch() async throws -> [SportRecord] {
         do {
-            let snapshot = try await collection
+            let snapshot =
+                try await collection
                 .order(by: "createdAt", descending: true)
                 .getDocuments()
             return try snapshot.documents.compactMap { document in

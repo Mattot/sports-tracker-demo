@@ -127,6 +127,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				76D381AE3007E19B007BA710 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				76FAE9033005923A0020BCD0 /* SportsTracker */,
@@ -226,6 +227,7 @@
 				76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "../Modules/SportRecord" */,
 				76FAE931300594DA0020BCD0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				76FAE936300595460020BCD0 /* XCRemoteSwiftPackageReference "Factory" */,
+				76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 76FAE9023005923A0020BCD0 /* Products */;
@@ -288,6 +290,10 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		76D381AE3007E19B007BA710 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			productRef = 76D381AD3007E19B007BA710 /* SwiftLintBuildToolPlugin */;
+		};
 		76FAE9103005923C0020BCD0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 76FAE9003005923A0020BCD0 /* SportsTracker */;
@@ -631,6 +637,14 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/SimplyDanny/SwiftLintPlugins";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.65.0;
+			};
+		};
 		76FAE931300594DA0020BCD0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/firebase/firebase-ios-sdk";
@@ -650,6 +664,11 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		76D381AD3007E19B007BA710 /* SwiftLintBuildToolPlugin */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
+			productName = "plugin:SwiftLintBuildToolPlugin";
+		};
 		76FAE92C3005945E0020BCD0 /* Core */ = {
 			isa = XCSwiftPackageProductDependency;
 			productName = Core;

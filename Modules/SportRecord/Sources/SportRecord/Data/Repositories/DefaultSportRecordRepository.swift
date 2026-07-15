@@ -1,5 +1,5 @@
-import Foundation
 import Core
+import Foundation
 
 public struct DefaultSportRecordRepository: SportRecordRepository {
     private let local: LocalSportRecordDataSource
@@ -20,7 +20,7 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
 
     public func save(_ record: SportRecord) async throws {
         switch record.storageType {
-        case .local:  try await local.insert(record)
+        case .local: try await local.insert(record)
         case .remote: try await remote.insert(record)
         }
     }

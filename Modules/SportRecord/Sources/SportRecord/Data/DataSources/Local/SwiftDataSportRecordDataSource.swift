@@ -1,6 +1,6 @@
+import Core
 import Foundation
 import SwiftData
-import Core
 
 /// Local store gateway. `@ModelActor` gives it an actor-isolated `ModelContext`
 /// so SwiftData I/O runs off the main actor with no `Sendable` violations.

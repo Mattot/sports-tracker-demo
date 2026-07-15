@@ -1,6 +1,6 @@
-import SwiftUI
 import FactoryKit
 import SportRecord
+import SwiftUI
 
 /// Composition root: resolves dependencies from the container and builds screens
 /// with constructor-injected ViewModels. Screens receive navigation as closures,
@@ -25,7 +25,10 @@ struct ScreenFactory {
         NavigationStack {
             AddRecordView(
                 viewModel: AddRecordViewModel(save: container.saveSportRecordUseCase()),
-                onSaved: { onSaved(); router.dismissSheet() },
+                onSaved: {
+                    onSaved()
+                    router.dismissSheet()
+                },
                 onCancel: { router.dismissSheet() }
             )
         }

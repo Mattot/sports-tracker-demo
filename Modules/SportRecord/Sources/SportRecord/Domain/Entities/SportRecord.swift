@@ -6,7 +6,7 @@ public struct SportRecord: Identifiable, Equatable, Sendable {
     public let id: UUID
     public let name: String
     public let location: String
-    public let duration: TimeInterval   // seconds
+    public let duration: TimeInterval  // seconds
     public let storageType: StorageType
     public let createdAt: Date
 

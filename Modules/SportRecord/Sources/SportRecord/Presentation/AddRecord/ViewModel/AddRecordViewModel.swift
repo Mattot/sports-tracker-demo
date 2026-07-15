@@ -56,11 +56,11 @@ public final class AddRecordViewModel {
     private func message(for storageType: StorageType) -> String {
         switch storageType {
         case .remote: "Couldn't save to the backend. You may be offline — check your connection and try again."
-        case .local:  "Couldn't save locally. Please try again."
+        case .local: "Couldn't save locally. Please try again."
         }
     }
 }
 
-private extension String {
-    var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
+extension String {
+    fileprivate var trimmed: String { trimmingCharacters(in: .whitespacesAndNewlines) }
 }

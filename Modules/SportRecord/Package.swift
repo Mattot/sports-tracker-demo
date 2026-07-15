@@ -10,6 +10,7 @@ let package = Package(
     dependencies: [
         .package(path: "../Core"),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", from: "12.16.0"),
+        .package(url: "https://github.com/SimplyDanny/SwiftLintPlugins", exact: "0.65.0"),
     ],
     targets: [
         .target(
@@ -17,7 +18,8 @@ let package = Package(
             dependencies: [
                 .product(name: "Core", package: "Core"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
-            ]
+            ],
+            plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
             name: "SportRecordTests",

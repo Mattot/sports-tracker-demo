@@ -1,7 +1,7 @@
-import FactoryKit
-import SwiftData
 import Core
+import FactoryKit
 import SportRecord
+import SwiftData
 
 extension Container {
     var networkMonitor: Factory<NetworkMonitor> {

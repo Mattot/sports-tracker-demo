@@ -1,0 +1,42 @@
+included:
+  - Modules/Core/Sources
+  - Modules/SportRecord/Sources
+  - SportsTracker/SportsTracker
+
+excluded:
+  - "**/.build"
+  - "**/DerivedData"
+  - "**/Assets.xcassets"
+  - SportsTracker/SportsTrackerUITests
+
+opt_in_rules:
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - contains_over_first_not_nil
+  - empty_count
+  - empty_string
+  - first_where
+  - last_where
+  - sorted_first_last
+  - redundant_nil_coalescing
+  - fatal_error_message
+  - pattern_matching_keywords
+  - explicit_init
+  - unneeded_parentheses_in_closure_argument
+  - modifier_order
+
+disabled_rules:
+  - todo
+
+line_length:
+  warning: 130
+  error: 180
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length: { warning: 2 }
+  excluded: [id, x, y, i]
+
+type_name:
+  excluded: [ID]

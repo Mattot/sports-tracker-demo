@@ -1,5 +1,5 @@
-import SwiftUI
 import Observation
+import SwiftUI
 
 /// Push destinations. Uninhabited today — the list has no pushes yet. The first
 /// push is one enum case + one `navigationDestination` branch in `AppFlowView`.
@@ -15,7 +15,11 @@ enum Sheet: Identifiable {
     case addRecord(onSaved: () -> Void)
 
     enum ID: Hashable { case addRecord }
-    var id: ID { switch self { case .addRecord: .addRecord } }
+    var id: ID {
+        switch self {
+        case .addRecord: .addRecord
+        }
+    }
 }
 
 @Observable
@@ -26,7 +30,10 @@ final class AppRouter {
 
     // `push(_:)` arrives with the first `Route` case — a function taking the
     // currently-uninhabited `Route` would be uncallable (dead code).
-    func pop() { guard !path.isEmpty else { return }; path.removeLast() }
+    func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
+    }
     func popToRoot() { path.removeAll() }
 
     func present(_ sheet: Sheet) { self.sheet = sheet }

@@ -16,15 +16,17 @@ Sports Tracker — a SwiftUI iOS app recording sport performances to local stora
 Build the app (repo root; expect `** BUILD SUCCEEDED **`):
 
 ```bash
-xcodebuild build -project SportsTracker/SportsTracker.xcodeproj -scheme SportsTracker -destination 'generic/platform=iOS Simulator'
+xcodebuild build -project SportsTracker/SportsTracker.xcodeproj -scheme SportsTracker -destination 'generic/platform=iOS Simulator' -skipPackagePluginValidation
 ```
 
 Test a package (run from the package directory, not the repo root):
 
 ```bash
 cd Modules/SportRecord   # or Modules/Core
-xcodebuild test -scheme SportRecord -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5'   # scheme Core for Modules/Core
+xcodebuild test -scheme SportRecord -destination 'platform=iOS Simulator,name=iPhone 16 Pro,OS=18.5' -skipPackagePluginValidation   # scheme Core for Modules/Core
 ```
+
+`-skipPackagePluginValidation` keeps SwiftLint's build-tool plugin from prompting for trust in non-interactive runs. SwiftLint (realm/SwiftLint, pinned to 0.65.0) runs as an SPM build-tool plugin on the `Core` and `SportRecord` source targets; the shared ruleset is `.swiftlint.yml` at the repo root, inherited by each package via `parent_config`. Formatting is Apple `swift-format` (`.swift-format`).
 
 Destination notes: with several simulator runtimes installed, a bare device name is ambiguous — keep the `OS=` qualifier (`xcrun simctl list devices available` shows what exists). The app scheme needs an iOS 18.6+ destination; the packages accept iOS 18.0+.
 
