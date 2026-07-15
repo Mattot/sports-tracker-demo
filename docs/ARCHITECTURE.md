@@ -64,7 +64,7 @@ Modules/Core/Sources/Core/
 
 SportsTracker/SportsTracker/
 ├── DI/                    # FactoryKit Container registrations
-└── Navigation/             # AppRouter, AppFlowView, ScreenFactory
+└── Navigation/            # AppRouter, AppFlowView, ScreenFactory
 ```
 
 New files go into the directory matching their layer; a new screen gets its own `Presentation/<Screen>/View|ViewModel` pair; tests mirror the source layout.
