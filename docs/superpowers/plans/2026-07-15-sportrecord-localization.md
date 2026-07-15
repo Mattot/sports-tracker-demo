@@ -608,12 +608,9 @@ Add these nested enums inside `L10n` (alongside `List`, `Filter`, `Common`):
         static var saveErrorTitle: String { str("addRecord.saveError.title") }
         static var saveErrorRemote: String { str("addRecord.saveError.remote") }
         static var saveErrorLocal: String { str("addRecord.saveError.local") }
-
-        enum Duration {
-            static var hours: String { str("addRecord.duration.hours") }
-            static var minutes: String { str("addRecord.duration.minutes") }
-            static var seconds: String { str("addRecord.duration.seconds") }
-        }
+        static var durationHours: String { str("addRecord.duration.hours") }
+        static var durationMinutes: String { str("addRecord.duration.minutes") }
+        static var durationSeconds: String { str("addRecord.duration.seconds") }
     }
 
     enum Storage {
@@ -687,9 +684,9 @@ Exact replacements in `AddRecordView.swift`:
 In `DurationPicker.swift`, replace the three `wheel(...)` unit arguments and make the wheel label verbatim so it isn't treated as a localization key:
 
 ```swift
-            wheel($hours, range: 0..<24, unit: L10n.AddRecord.Duration.hours)
-            wheel($minutes, range: 0..<60, unit: L10n.AddRecord.Duration.minutes)
-            wheel($seconds, range: 0..<60, unit: L10n.AddRecord.Duration.seconds)
+            wheel($hours, range: 0..<24, unit: L10n.AddRecord.durationHours)
+            wheel($minutes, range: 0..<60, unit: L10n.AddRecord.durationMinutes)
+            wheel($seconds, range: 0..<60, unit: L10n.AddRecord.durationSeconds)
 ```
 
 and in the `wheel` builder:
@@ -844,7 +841,9 @@ git commit -m "feat(app): add per-app Czech/Slovak language switcher"
 - **Spec coverage:** every key in the spec's §3 inventory has an `en`/`cs`/`sk` catalog entry (Tasks 1–3) and an `L10n` accessor; `common.save` added in Task 3 Step 8 where first used. ✅
 - **Translations:** cs/sk values match the spec's §3a table; the `list.deleteConfirm.title %lld` plural carries `one`/`few`/`other` for cs and sk (Task 2 Step 3). ✅
 - **Substring constraint:** English `addRecord.saveError.remote/.local` wording preserved verbatim (cs/sk free to differ); tests run in `en`, guarded in Task 3 Step 1. ✅
-- **Type consistency:** accessor names referenced in call-site steps (`L10n.List.deleteSelectionButton`, `deleteConfirmTitle`, `L10n.Common.save`, `L10n.AddRecord.Duration.hours`, `L10n.Storage.local`) all match their definitions in Steps 4/8. ✅
+- **Type consistency:** accessor names referenced in call-site steps (`L10n.List.deleteSelectionButton`, `deleteConfirmTitle`, `L10n.Common.save`, `L10n.AddRecord.durationHours`, `L10n.Storage.local`) all match their definitions in Steps 4/8. ✅
+
+> **Post-execution amendments** (committed code is source of truth): the Duration accessors are flat statics `L10n.AddRecord.durationHours/Minutes/Seconds` (the nested `enum Duration` tripped SwiftLint's `nesting` rule — commit `4f927fb`). A `list.filter.picker` key (`Filter` / `Filtr` / `Filter`) with accessor `L10n.List.filterPicker` was added for the segmented filter's VoiceOver label, missed by Task 2's Step 7 list (commit `bb2afc6`). The Makefile test targets pin `-testLanguage en` so English assertions are host-locale-independent (commit `51b7a11`). The `cs`/`sk` word for "local" was later revised from `místní/miestne` to `lokální/lokálne`.
 - **Locale resolution:** `defaultLocalization` stays `en`; cs/sk live only in the feature catalog; `Bundle.module` resolution documented. ✅
 - **Per-app switcher (Task 5):** App target gains `cs`/`sk` in `knownRegions` + an `InfoPlist.xcstrings` populating `CFBundleLocalizations`; verified via built-bundle `PlistBuddy` check and Settings ▸ app ▸ Language. ✅
 - **Domain purity:** feature edits are in `Presentation/` + `Resources/` + `Package.swift`; no Domain/Data file touched. Task 5 touches only the App project (`pbxproj` + app `InfoPlist.xcstrings`). ✅

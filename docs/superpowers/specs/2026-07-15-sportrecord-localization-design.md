@@ -52,6 +52,7 @@ Screens: **List** (`RecordsListView`, `RecordsListState`, `RecordsListViewModel`
 | banner offline | `You're offline — showing local records.` | `list.banner.offline` |
 | banner remote down | `Couldn't reach remote — showing local records.` | `list.banner.remoteUnavailable` |
 | toolbar add label | `Add Record` | `list.add.button` |
+| filter picker (a11y label) | `Filter` | `list.filter.picker` |
 | bottom-bar delete | `Delete Records (%lld)` | `list.deleteSelection.button` |
 | confirm dialog title | `Delete %lld record(s)?` → **plural** | `list.deleteConfirm.title %lld` |
 | delete err both | `Couldn't delete some records. Check your connection and try again.` | `list.deleteError.both` |
@@ -112,16 +113,17 @@ Screens: **List** (`RecordsListView`, `RecordsListState`, `RecordsListViewModel`
 | `list.empty.message` | Add your first activity to see it here. | Přidejte svou první aktivitu a zobrazí se zde. | Pridajte svoju prvú aktivitu a zobrazí sa tu. |
 | `list.empty.filtered.title` | No %@ Records | Žádné %@ záznamy | Žiadne %@ záznamy |
 | `list.empty.filtered.message` | You have no %@ records yet. | Zatím nemáte žádné %@ záznamy. | Zatiaľ nemáte žiadne %@ záznamy. |
-| `list.banner.offline` | You're offline — showing local records. | Jste offline — zobrazují se místní záznamy. | Ste offline — zobrazujú sa miestne záznamy. |
-| `list.banner.remoteUnavailable` | Couldn't reach remote — showing local records. | Vzdálené úložiště není dostupné — zobrazují se místní záznamy. | Vzdialené úložisko nie je dostupné — zobrazujú sa miestne záznamy. |
+| `list.banner.offline` | You're offline — showing local records. | Jste offline — zobrazují se lokální záznamy. | Ste offline — zobrazujú sa lokálne záznamy. |
+| `list.banner.remoteUnavailable` | Couldn't reach remote — showing local records. | Vzdálené úložiště není dostupné — zobrazují se lokální záznamy. | Vzdialené úložisko nie je dostupné — zobrazujú sa lokálne záznamy. |
 | `list.add.button` | Add Record | Přidat záznam | Pridať záznam |
 | `list.deleteSelection.button` | Delete Records (%lld) | Smazat záznamy (%lld) | Odstrániť záznamy (%lld) |
 | `list.deleteError.both` | Couldn't delete some records. Check your connection and try again. | Některé záznamy se nepodařilo smazat. Zkontrolujte připojení a zkuste to znovu. | Niektoré záznamy sa nepodarilo odstrániť. Skontrolujte pripojenie a skúste to znova. |
 | `list.deleteError.remote` | Couldn't delete remote records. You may be offline. | Vzdálené záznamy se nepodařilo smazat. Možná jste offline. | Vzdialené záznamy sa nepodarilo odstrániť. Možno ste offline. |
-| `list.deleteError.local` | Couldn't delete local records. Please try again. | Místní záznamy se nepodařilo smazat. Zkuste to prosím znovu. | Miestne záznamy sa nepodarilo odstrániť. Skúste to prosím znova. |
+| `list.deleteError.local` | Couldn't delete local records. Please try again. | Lokální záznamy se nepodařilo smazat. Zkuste to prosím znovu. | Lokálne záznamy sa nepodarilo odstrániť. Skúste to prosím znova. |
 | `list.deleteError.unknown` | Couldn't delete records. | Záznamy se nepodařilo smazat. | Záznamy sa nepodarilo odstrániť. |
 | `filter.all` | All | Všechny | Všetky |
-| `filter.local` | Local | Místní | Miestne |
+| `filter.local` | Local | Lokální | Lokálne |
+| `list.filter.picker` | Filter *(a11y label)* | Filtr | Filter |
 | `filter.remote` | Remote | Vzdálené | Vzdialené |
 | `common.ok` | OK | OK | OK |
 | `common.cancel` | Cancel | Zrušit | Zrušiť |
@@ -139,11 +141,11 @@ Screens: **List** (`RecordsListView`, `RecordsListState`, `RecordsListViewModel`
 | `addRecord.storage.picker` | Select storage | Vyberte úložiště | Vyberte úložisko |
 | `addRecord.saveError.title` | Couldn't Save | Nepodařilo se uložit | Nepodarilo sa uložiť |
 | `addRecord.saveError.remote` | Couldn't save to the backend. You may be offline — check your connection and try again. | Nepodařilo se uložit na server. Možná jste offline — zkontrolujte připojení a zkuste to znovu. | Nepodarilo sa uložiť na server. Možno ste offline — skontrolujte pripojenie a skúste to znova. |
-| `addRecord.saveError.local` | Couldn't save locally. Please try again. | Nepodařilo se uložit místně. Zkuste to prosím znovu. | Nepodarilo sa uložiť miestne. Skúste to prosím znova. |
+| `addRecord.saveError.local` | Couldn't save locally. Please try again. | Nepodařilo se uložit lokálně. Zkuste to prosím znovu. | Nepodarilo sa uložiť lokálne. Skúste to prosím znova. |
 | `addRecord.duration.hours` | h | h | h |
 | `addRecord.duration.minutes` | m | m | m |
 | `addRecord.duration.seconds` | s | s | s |
-| `storageType.local` | Local | Místní | Miestne |
+| `storageType.local` | Local | Lokální | Lokálne |
 | `storageType.remote` | Remote | Vzdálené | Vzdialené |
 
 ### Plural: `list.deleteConfirm.title %lld`
@@ -168,7 +170,7 @@ Returning `String` (not `LocalizedStringKey`/`LocalizedStringResource`) works un
 
 ## 5. Constraints / gotchas
 
-- **`AddRecordViewModelTests` asserts** `saveError` contains `"backend"` (remote) and `"locally"` (local). Those assertions resolve against the **test process locale, which is `en`**, so the *English* wording for `addRecord.saveError.remote` / `.local` must keep those substrings (the `cs`/`sk` translations can use "server"/"místně" freely). Preserve the English verbatim.
+- **`AddRecordViewModelTests` asserts** `saveError` contains `"backend"` (remote) and `"locally"` (local). Those assertions resolve against the **test process locale, which is `en`**, so the *English* wording for `addRecord.saveError.remote` / `.local` must keep those substrings (the `cs`/`sk` translations can use "server"/"lokálně" freely). Preserve the English verbatim.
 - `Package.swift` needs `defaultLocalization: "en"` (required for any localized resource) and an explicit `resources: [.process("Resources")]` on the target. `cs`/`sk` are *not* named here — they live only as `localizations` inside the catalog.
 - **Locale resolution is per-bundle.** `Bundle.module` computes its own `preferredLocalizations` from the catalog's available languages ∩ the user's `AppleLanguages`. So the package's `cs`/`sk` strings load whenever the device language (or an Xcode scheme "App Language" override, which injects `-AppleLanguages`) is Czech/Slovak — **independent of the App target**. No app-target change is required for the strings to appear.
 - **Per-app language switcher (in scope).** iOS only shows the per-app "Preferred Language" control, and only reports `Locale.current` as `cs`/`sk` to the App bundle, if the *app bundle* itself declares those localizations — nested package/framework bundles (like `SportRecord`'s) don't count toward the app's language list. So the App target must gain `cs`/`sk` in the project's `knownRegions` **and** an app-level localized resource (an `InfoPlist.xcstrings`) so `CFBundleLocalizations` lists `en`/`cs`/`sk`. This is what makes the switcher appear; the feature strings still come from `Bundle.module`.
