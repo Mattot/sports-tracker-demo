@@ -43,7 +43,7 @@ Destination notes: with several simulator runtimes installed, a bare device name
 - **Swift Testing** (`import Testing`, `@Test`, `#expect`) — not XCTest. Fakes live in `Modules/SportRecord/Tests/SportRecordTests/Support/Fakes.swift`; append, don't overwrite.
 - Swift 6 strict concurrency must stay warning-free (`@ModelActor` for SwiftData I/O, `Sendable` across boundaries).
 - Typed throws for domain failure modes (see `SportRecordsDeleteError`).
-- Conventional commits scoped as in history: `feat(sportrecord):`, `fix(app):`, `refactor(sportrecord):`, `docs:`, `chore(sportrecord):`.
+- Conventional commits scoped as in history: `feat(sportrecord):`, `feat(app):`, `refactor(sportrecord):`, `docs:`, `chore(sportrecord):`.
 
 ## Gotchas
 

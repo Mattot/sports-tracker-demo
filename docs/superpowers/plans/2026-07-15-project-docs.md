@@ -140,7 +140,7 @@ The navigation infrastructure (router, flow view, screen factory) lives entirely
 - **Partial-failure-aware fetch** — the stores are read concurrently; one failing store never hides the other store's records, and the failure drives an in-list banner instead.
 - **Local-first progressive loading** — local records paint immediately; the merged local + remote result follows.
 - **Partial-failure-aware delete** — batch deletes are routed per store and commit independently; a typed error reports exactly which store failed, and only those rows are kept.
-- **Pull-to-refresh** in every list state, plus an automatic refresh when the app returns to the foreground.
+- **Pull-to-refresh** on every segment of the list, including empty ones, plus an automatic refresh when the app returns to the foreground.
 - **Edit mode** with multi-select and confirmed batch delete; swipe-to-delete outside edit mode.
 - **Per-segment empty states** and a global "add your first activity" empty state.
 - **Unit tests across all layers** (Swift Testing) — data sources run against an in-memory SwiftData container; deletes are covered by a full local/remote combination matrix.
@@ -421,7 +421,7 @@ Destination notes: with several simulator runtimes installed, a bare device name
 - **Swift Testing** (`import Testing`, `@Test`, `#expect`) — not XCTest. Fakes live in `Modules/SportRecord/Tests/SportRecordTests/Support/Fakes.swift`; append, don't overwrite.
 - Swift 6 strict concurrency must stay warning-free (`@ModelActor` for SwiftData I/O, `Sendable` across boundaries).
 - Typed throws for domain failure modes (see `SportRecordsDeleteError`).
-- Conventional commits scoped as in history: `feat(sportrecord):`, `fix(app):`, `refactor(sportrecord):`, `docs:`, `chore(sportrecord):`.
+- Conventional commits scoped as in history: `feat(sportrecord):`, `feat(app):`, `refactor(sportrecord):`, `docs:`, `chore(sportrecord):`.
 
 ## Gotchas
 
