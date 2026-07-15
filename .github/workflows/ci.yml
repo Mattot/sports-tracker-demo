@@ -14,6 +14,9 @@ jobs:
       - name: Show versions
         run: swift --version && xcodebuild -version
 
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
       - name: Check formatting
         run: make format-check
 
