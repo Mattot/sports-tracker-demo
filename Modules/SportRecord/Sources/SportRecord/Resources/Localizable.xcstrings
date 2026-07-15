@@ -1,0 +1,13 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "list.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "Sport Records" } },
+        "cs" : { "stringUnit" : { "state" : "translated", "value" : "Sportovní záznamy" } },
+        "sk" : { "stringUnit" : { "state" : "translated", "value" : "Športové záznamy" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}

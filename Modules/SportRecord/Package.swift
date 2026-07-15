@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "SportRecord",
+    defaultLocalization: "en",
     platforms: [.iOS(.v18)],
     products: [
         .library(name: "SportRecord", targets: ["SportRecord"]),
@@ -19,6 +20,7 @@ let package = Package(
                 .product(name: "Core", package: "Core"),
                 .product(name: "FirebaseFirestore", package: "firebase-ios-sdk"),
             ],
+            resources: [.process("Resources")],
             plugins: [.plugin(name: "SwiftLintBuildToolPlugin", package: "SwiftLintPlugins")]
         ),
         .testTarget(
