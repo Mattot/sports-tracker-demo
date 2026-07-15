@@ -282,7 +282,7 @@ New files go into the directory matching their layer; a new screen gets its own 
 2. If local records arrive (and there are any), they are yielded immediately — the list paints without waiting for a possibly slow or offline remote.
 3. The stream always ends with the combined result: both stores merged, sorted by `createdAt` descending, with every store that threw collected in `failedStores` instead of failing the whole fetch.
 
-The ViewModel folds the stream into `RecordsContentState` (`loading` / `loaded([SportRecord])` / `failed` — no separate empty case; `loaded([])` covers it) and derives the banner from two orthogonal signals: `NetworkMonitor.isOnline` and `failedStores.contains(.remote)`. `failed` is reached only when there is nothing to show and both stores failed. The **All | Local | Remote** filter is a pure in-memory derivation — switching segments never refetches.
+The ViewModel folds the stream into `RecordsContentState` (`loading` / `loaded([SportRecord])` / `failed` — no separate empty case; `loaded([])` covers it) and derives the banner from two orthogonal signals: its `isOffline` flag (fed by `NetworkMonitor.updates`) and `failedStores.contains(.remote)`. `failed` is reached only when there is nothing to show and at least one store failed. The **All | Local | Remote** filter is a pure in-memory derivation — switching segments never refetches.
 
 ### Save
 
@@ -290,7 +290,7 @@ The ViewModel folds the stream into `RecordsContentState` (`loading` / `loaded([
 
 ### Delete — per-store routing, independent commits
 
-The repository groups the records by `storageType` and runs each non-empty group's delete concurrently. Each store commits independently — one store failing does not roll back the other. Failures surface as the **typed throw** `SportRecordsDeleteError` (Swift 6 `throws(...)`) naming exactly the failed store(s), so the ViewModel removes only the rows that were actually deleted, keeps the failed ones selected, and shows a store-specific message.
+The repository groups the records by `storageType` and runs each non-empty group's delete concurrently. Each store commits independently — one store failing does not roll back the other. Failures surface as the **typed throw** `SportRecordsDeleteError` (Swift 6 `throws(...)`) naming exactly the failed store(s), so the ViewModel removes only the rows that were actually deleted, keeps the failed ones selected, and shows a store-specific message. (The current Firestore implementation commits remote deletes offline-first and fire-and-forget, so a server-side remote failure surfaces in logs rather than through this throw.)
 
 ## Navigation
 
