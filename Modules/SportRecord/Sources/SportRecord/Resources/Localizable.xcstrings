@@ -148,6 +148,86 @@
       "en" : { "stringUnit" : { "state" : "translated", "value" : "Try Again" } },
       "cs" : { "stringUnit" : { "state" : "translated", "value" : "Zkusit znovu" } },
       "sk" : { "stringUnit" : { "state" : "translated", "value" : "Skúsiť znova" } }
+    } },
+    "common.save" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Save" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Uložit" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Uložiť" } }
+    } },
+    "addRecord.title" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Add Record" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Přidat záznam" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Pridať záznam" } }
+    } },
+    "addRecord.section.activity" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Activity" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Aktivita" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Aktivita" } }
+    } },
+    "addRecord.name.placeholder" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Name" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Název" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Názov" } }
+    } },
+    "addRecord.location.placeholder" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Location" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Místo" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Miesto" } }
+    } },
+    "addRecord.section.duration" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Duration" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Doba trvání" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Trvanie" } }
+    } },
+    "addRecord.section.storage" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Storage" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Úložiště" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Úložisko" } }
+    } },
+    "addRecord.storage.picker" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Select storage" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Vyberte úložiště" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Vyberte úložisko" } }
+    } },
+    "addRecord.saveError.title" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't Save" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Nepodařilo se uložit" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Nepodarilo sa uložiť" } }
+    } },
+    "addRecord.saveError.remote" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't save to the backend. You may be offline — check your connection and try again." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Nepodařilo se uložit na server. Možná jste offline — zkontrolujte připojení a zkuste to znovu." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Nepodarilo sa uložiť na server. Možno ste offline — skontrolujte pripojenie a skúste to znova." } }
+    } },
+    "addRecord.saveError.local" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Couldn't save locally. Please try again." } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Nepodařilo se uložit místně. Zkuste to prosím znovu." } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Nepodarilo sa uložiť miestne. Skúste to prosím znova." } }
+    } },
+    "addRecord.duration.hours" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "h" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "h" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "h" } }
+    } },
+    "addRecord.duration.minutes" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "m" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "m" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "m" } }
+    } },
+    "addRecord.duration.seconds" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "s" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "s" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "s" } }
+    } },
+    "storageType.local" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Local" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Místní" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Miestne" } }
+    } },
+    "storageType.remote" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Remote" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Vzdálené" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Vzdialené" } }
     } }
   },
   "version" : "1.0"

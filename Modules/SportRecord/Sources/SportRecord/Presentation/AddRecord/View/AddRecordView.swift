@@ -20,25 +20,25 @@ public struct AddRecordView: View {
 
     public var body: some View {
         Form {
-            Section("Activity") {
-                TextField("Name", text: $viewModel.name)
+            Section(L10n.AddRecord.sectionActivity) {
+                TextField(L10n.AddRecord.namePlaceholder, text: $viewModel.name)
                     .focused($focusedField, equals: .name)
                     .submitLabel(.next)
                     .onSubmit { focusedField = .location }
-                TextField("Location", text: $viewModel.location)
+                TextField(L10n.AddRecord.locationPlaceholder, text: $viewModel.location)
                     .focused($focusedField, equals: .location)
                     .submitLabel(.done)
                     .onSubmit { focusedField = nil }
             }
-            Section("Duration") {
+            Section(L10n.AddRecord.sectionDuration) {
                 DurationPicker(
                     hours: $viewModel.hours,
                     minutes: $viewModel.minutes,
                     seconds: $viewModel.seconds
                 )
             }
-            Section("Storage") {
-                Picker("Select storage", selection: $viewModel.storageType) {
+            Section(L10n.AddRecord.sectionStorage) {
+                Picker(L10n.AddRecord.storagePicker, selection: $viewModel.storageType) {
                     ForEach(StorageType.allCases, id: \.self) { type in
                         Text(type.label)
                             .foregroundStyle(type.accentColor)
@@ -50,27 +50,27 @@ public struct AddRecordView: View {
             }
         }
         .onAppear { focusedField = .name }
-        .navigationTitle("Add Record")
+        .navigationTitle(L10n.AddRecord.title)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button("Cancel") { onCancel() }
+                Button(L10n.Common.cancel) { onCancel() }
             }
             ToolbarItem(placement: .confirmationAction) {
-                Button("Save") {
+                Button(L10n.Common.save) {
                     Task { if await viewModel.save() { onSaved() } }
                 }
                 .disabled(!viewModel.canSave)
             }
         }
         .alert(
-            "Couldn't Save",
+            L10n.AddRecord.saveErrorTitle,
             isPresented: Binding(
                 get: { viewModel.saveError != nil },
                 set: { if !$0 { viewModel.saveError = nil } }
             )
         ) {
-            Button("OK", role: .cancel) {}
+            Button(L10n.Common.ok, role: .cancel) {}
         } message: {
             Text(viewModel.saveError ?? "")
         }

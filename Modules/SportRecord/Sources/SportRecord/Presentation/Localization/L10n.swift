@@ -49,6 +49,31 @@ enum L10n {
         static var done: String { str("common.done") }
         static var edit: String { str("common.edit") }
         static var tryAgain: String { str("common.tryAgain") }
+        static var save: String { str("common.save") }
+    }
+
+    enum AddRecord {
+        static var title: String { str("addRecord.title") }
+        static var sectionActivity: String { str("addRecord.section.activity") }
+        static var namePlaceholder: String { str("addRecord.name.placeholder") }
+        static var locationPlaceholder: String { str("addRecord.location.placeholder") }
+        static var sectionDuration: String { str("addRecord.section.duration") }
+        static var sectionStorage: String { str("addRecord.section.storage") }
+        static var storagePicker: String { str("addRecord.storage.picker") }
+        static var saveErrorTitle: String { str("addRecord.saveError.title") }
+        static var saveErrorRemote: String { str("addRecord.saveError.remote") }
+        static var saveErrorLocal: String { str("addRecord.saveError.local") }
+
+        enum Duration {
+            static var hours: String { str("addRecord.duration.hours") }
+            static var minutes: String { str("addRecord.duration.minutes") }
+            static var seconds: String { str("addRecord.duration.seconds") }
+        }
+    }
+
+    enum Storage {
+        static var local: String { str("storageType.local") }
+        static var remote: String { str("storageType.remote") }
     }
 }
 

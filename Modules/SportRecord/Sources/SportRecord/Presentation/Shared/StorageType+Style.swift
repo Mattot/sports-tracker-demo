@@ -11,8 +11,8 @@ extension StorageType {
 
     var label: String {
         switch self {
-        case .local: "Local"
-        case .remote: "Remote"
+        case .local: L10n.Storage.local
+        case .remote: L10n.Storage.remote
         }
     }
 }
