@@ -22,35 +22,26 @@
 			remoteGlobalIDString = 76FAE9003005923A0020BCD0;
 			remoteInfo = SportsTracker;
 		};
-		76FAE9193005923C0020BCD0 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 76FAE8F93005923A0020BCD0 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 76FAE9003005923A0020BCD0;
-			remoteInfo = SportsTracker;
-		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		76FAE9013005923A0020BCD0 /* SportsTracker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SportsTracker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		76FAE90E3005923C0020BCD0 /* SportsTrackerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SportsTrackerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
-		76FAE9183005923C0020BCD0 /* SportsTrackerUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SportsTrackerUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		76FAE9033005923A0020BCD0 /* SportsTracker */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = SportsTracker;
 			sourceTree = "<group>";
 		};
 		76FAE9113005923C0020BCD0 /* SportsTrackerTests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+			);
 			path = SportsTrackerTests;
-			sourceTree = "<group>";
-		};
-		76FAE91B3005923C0020BCD0 /* SportsTrackerUITests */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
-			path = SportsTrackerUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -75,13 +66,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		76FAE9153005923C0020BCD0 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -90,7 +74,6 @@
 			children = (
 				76FAE9033005923A0020BCD0 /* SportsTracker */,
 				76FAE9113005923C0020BCD0 /* SportsTrackerTests */,
-				76FAE91B3005923C0020BCD0 /* SportsTrackerUITests */,
 				76FAE939300596EF0020BCD0 /* Frameworks */,
 				76FAE9023005923A0020BCD0 /* Products */,
 			);
@@ -101,7 +84,6 @@
 			children = (
 				76FAE9013005923A0020BCD0 /* SportsTracker.app */,
 				76FAE90E3005923C0020BCD0 /* SportsTrackerTests.xctest */,
-				76FAE9183005923C0020BCD0 /* SportsTrackerUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -161,34 +143,9 @@
 				76FAE9113005923C0020BCD0 /* SportsTrackerTests */,
 			);
 			name = SportsTrackerTests;
-			packageProductDependencies = (
-			);
 			productName = SportsTrackerTests;
 			productReference = 76FAE90E3005923C0020BCD0 /* SportsTrackerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
-		};
-		76FAE9173005923C0020BCD0 /* SportsTrackerUITests */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 76FAE9283005923C0020BCD0 /* Build configuration list for PBXNativeTarget "SportsTrackerUITests" */;
-			buildPhases = (
-				76FAE9143005923C0020BCD0 /* Sources */,
-				76FAE9153005923C0020BCD0 /* Frameworks */,
-				76FAE9163005923C0020BCD0 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-				76FAE91A3005923C0020BCD0 /* PBXTargetDependency */,
-			);
-			fileSystemSynchronizedGroups = (
-				76FAE91B3005923C0020BCD0 /* SportsTrackerUITests */,
-			);
-			name = SportsTrackerUITests;
-			packageProductDependencies = (
-			);
-			productName = SportsTrackerUITests;
-			productReference = 76FAE9183005923C0020BCD0 /* SportsTrackerUITests.xctest */;
-			productType = "com.apple.product-type.bundle.ui-testing";
 		};
 /* End PBXNativeTarget section */
 
@@ -207,10 +164,6 @@
 						CreatedOnToolsVersion = 26.6;
 						TestTargetID = 76FAE9003005923A0020BCD0;
 					};
-					76FAE9173005923C0020BCD0 = {
-						CreatedOnToolsVersion = 26.6;
-						TestTargetID = 76FAE9003005923A0020BCD0;
-					};
 				};
 			};
 			buildConfigurationList = 76FAE8FC3005923A0020BCD0 /* Build configuration list for PBXProject "SportsTracker" */;
@@ -223,8 +176,8 @@
 			mainGroup = 76FAE8F83005923A0020BCD0;
 			minimizedProjectReferenceProxies = 1;
 			packageReferences = (
-				76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "../Modules/Core" */,
-				76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "../Modules/SportRecord" */,
+				76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "Core" */,
+				76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "SportRecord" */,
 				76FAE931300594DA0020BCD0 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				76FAE936300595460020BCD0 /* XCRemoteSwiftPackageReference "Factory" */,
 				76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */,
@@ -236,7 +189,6 @@
 			targets = (
 				76FAE9003005923A0020BCD0 /* SportsTracker */,
 				76FAE90D3005923C0020BCD0 /* SportsTrackerTests */,
-				76FAE9173005923C0020BCD0 /* SportsTrackerUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -250,13 +202,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		76FAE90C3005923C0020BCD0 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		76FAE9163005923C0020BCD0 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -280,29 +225,17 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		76FAE9143005923C0020BCD0 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
 		76D381AE3007E19B007BA710 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			productRef = 76D381AD3007E19B007BA710 /* SwiftLintBuildToolPlugin */;
+			productRef = 76D381AD3007E19B007BA710 /* plugin:SwiftLintBuildToolPlugin */;
 		};
 		76FAE9103005923C0020BCD0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 76FAE9003005923A0020BCD0 /* SportsTracker */;
 			targetProxy = 76FAE90F3005923C0020BCD0 /* PBXContainerItemProxy */;
-		};
-		76FAE91A3005923C0020BCD0 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 76FAE9003005923A0020BCD0 /* SportsTracker */;
-			targetProxy = 76FAE9193005923C0020BCD0 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -516,7 +449,7 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SportsTracker.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SportsTracker";
 			};
@@ -538,49 +471,9 @@
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
+				SWIFT_VERSION = 6.0;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SportsTracker.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SportsTracker";
-			};
-			name = Release;
-		};
-		76FAE9293005923C0020BCD0 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S6WQTU29N2;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.matusselecky.SportsTrackerUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = SportsTracker;
-			};
-			name = Debug;
-		};
-		76FAE92A3005923C0020BCD0 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = S6WQTU29N2;
-				GENERATE_INFOPLIST_FILE = YES;
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.matusselecky.SportsTrackerUITests;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				STRING_CATALOG_GENERATE_SYMBOLS = NO;
-				SWIFT_APPROACHABLE_CONCURRENCY = YES;
-				SWIFT_EMIT_LOC_STRINGS = NO;
-				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-				TEST_TARGET_NAME = SportsTracker;
 			};
 			name = Release;
 		};
@@ -614,23 +507,14 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		76FAE9283005923C0020BCD0 /* Build configuration list for PBXNativeTarget "SportsTrackerUITests" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				76FAE9293005923C0020BCD0 /* Debug */,
-				76FAE92A3005923C0020BCD0 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
 /* End XCConfigurationList section */
 
 /* Begin XCLocalSwiftPackageReference section */
-		76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "../Modules/Core" */ = {
+		76FAE92B3005945E0020BCD0 /* XCLocalSwiftPackageReference "Core" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Modules/Core;
 		};
-		76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "../Modules/SportRecord" */ = {
+		76FAE92E300594910020BCD0 /* XCLocalSwiftPackageReference "SportRecord" */ = {
 			isa = XCLocalSwiftPackageReference;
 			relativePath = ../Modules/SportRecord;
 		};
@@ -664,7 +548,7 @@
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		76D381AD3007E19B007BA710 /* SwiftLintBuildToolPlugin */ = {
+		76D381AD3007E19B007BA710 /* plugin:SwiftLintBuildToolPlugin */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 76D381A93007E14C007BA710 /* XCRemoteSwiftPackageReference "SwiftLintPlugins" */;
 			productName = "plugin:SwiftLintBuildToolPlugin";

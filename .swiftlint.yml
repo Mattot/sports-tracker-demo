@@ -7,7 +7,6 @@ excluded:
   - "**/.build"
   - "**/DerivedData"
   - "**/Assets.xcassets"
-  - SportsTracker/SportsTrackerUITests
 
 opt_in_rules:
   - contains_over_filter_count
