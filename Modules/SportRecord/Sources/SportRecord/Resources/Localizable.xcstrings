@@ -58,6 +58,11 @@
       "cs" : { "stringUnit" : { "state" : "translated", "value" : "Přidat záznam" } },
       "sk" : { "stringUnit" : { "state" : "translated", "value" : "Pridať záznam" } }
     } },
+    "list.filter.picker" : { "localizations" : {
+      "en" : { "stringUnit" : { "state" : "translated", "value" : "Filter" } },
+      "cs" : { "stringUnit" : { "state" : "translated", "value" : "Filtr" } },
+      "sk" : { "stringUnit" : { "state" : "translated", "value" : "Filter" } }
+    } },
     "list.deleteSelection.button" : { "localizations" : {
       "en" : { "stringUnit" : { "state" : "translated", "value" : "Delete Records (%lld)" } },
       "cs" : { "stringUnit" : { "state" : "translated", "value" : "Smazat záznamy (%lld)" } },

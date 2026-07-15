@@ -16,6 +16,7 @@ enum L10n {
         static var bannerOffline: String { str("list.banner.offline") }
         static var bannerRemoteUnavailable: String { str("list.banner.remoteUnavailable") }
         static var addButton: String { str("list.add.button") }
+        static var filterPicker: String { str("list.filter.picker") }
         static var deleteErrorBoth: String { str("list.deleteError.both") }
         static var deleteErrorRemote: String { str("list.deleteError.remote") }
         static var deleteErrorLocal: String { str("list.deleteError.local") }

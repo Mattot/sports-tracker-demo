@@ -104,7 +104,7 @@ public struct RecordsListView: View {
     }
 
     private var filterPicker: some View {
-        Picker("Filter", selection: $viewModel.filter) {
+        Picker(L10n.List.filterPicker, selection: $viewModel.filter) {
             ForEach(RecordsFilter.allCases) { filter in
                 Text(filter.title).tag(filter)
             }
