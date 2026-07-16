@@ -2,7 +2,7 @@ import Foundation
 import Core
 @testable import SportRecord
 
-/// Fake repository whose fetch/delete behaviour is set per test. Used on the
+/// Fake repository whose read/delete behaviour is set per test. Used on the
 /// main actor in tests; mutable state is therefore not synchronized.
 final class FakeSportRecordRepository: SportRecordRepository, @unchecked Sendable {
     var localRecords: [SportRecord] = []
@@ -19,9 +19,17 @@ final class FakeSportRecordRepository: SportRecordRepository, @unchecked Sendabl
         return localRecords
     }
 
-    func fetchRemote() async throws -> [SportRecord] {
-        if let remoteError { throw remoteError }
-        return remoteRecords
+    func observeRemote() -> AsyncThrowingStream<[SportRecord], Error> {
+        let records = remoteRecords
+        let shouldFail = remoteError != nil
+        return AsyncThrowingStream { continuation in
+            if shouldFail {
+                continuation.finish(throwing: AnyError())
+            } else {
+                continuation.yield(records)
+                continuation.finish()
+            }
+        }
     }
 
     func save(_ record: SportRecord) async throws {
@@ -50,6 +58,8 @@ enum Sample {
 }
 
 /// Configurable fake data source usable for both local and remote roles.
+/// `fetch()` backs the local role; `observeRecords()` backs the remote role and
+/// yields the current `records` once before finishing (or throws `fetchError`).
 final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSource, @unchecked Sendable {
     var records: [SportRecord] = []
     var fetchError: Error?
@@ -63,6 +73,19 @@ final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSou
         return records
     }
 
+    func observeRecords() -> AsyncThrowingStream<[SportRecord], Error> {
+        let records = self.records
+        let shouldFail = fetchError != nil
+        return AsyncThrowingStream { continuation in
+            if shouldFail {
+                continuation.finish(throwing: AnyError())
+            } else {
+                continuation.yield(records)
+                continuation.finish()
+            }
+        }
+    }
+
     func insert(_ record: SportRecord) async throws {
         inserted.append(record)
         if let insertError { throw insertError }
@@ -74,53 +97,43 @@ final class FakeDataSource: LocalSportRecordDataSource, RemoteSportRecordDataSou
     }
 }
 
-struct AnyError: Error {}
+struct AnyError: Error, Sendable {}
 
-/// The stream yields `results` in order; the last one is the combined result.
-final class FakeFetchUseCase: FetchSportRecordsUseCase, @unchecked Sendable {
-    var results: [SportRecordsFetchResult] = []
-    /// Optional gate awaited just before the final yield, so a test can observe
-    /// the intermediate (local-first) state.
-    var beforeFinalYield: (@Sendable () async -> Void)?
+/// One-shot local read use case: returns `records`, or throws `errorToThrow`.
+@MainActor
+final class FakeFetchLocalRecordsUseCase: FetchLocalRecordsUseCase {
+    var records: [SportRecord] = []
+    var errorToThrow: (any Error)?
     private(set) var callCount = 0
 
-    /// Convenience for tests that only care about the combined result.
-    var result: SportRecordsFetchResult {
-        get { results.last ?? SportRecordsFetchResult(records: [], failedStores: []) }
-        set { results = [newValue] }
-    }
-
-    func execute() -> AsyncStream<SportRecordsFetchResult> {
+    func callAsFunction() async throws -> [SportRecord] {
         callCount += 1
-        let results = self.results
-        let gate = self.beforeFinalYield
-        return AsyncStream { continuation in
-            Task {
-                for (index, result) in results.enumerated() {
-                    if index == results.count - 1, let gate { await gate() }
-                    continuation.yield(result)
-                }
-                continuation.finish()
-            }
-        }
+        if let errorToThrow { throw errorToThrow }
+        return records
     }
 }
 
-/// A one-shot gate for tests: `wait()` suspends until `release()` is called.
-@MainActor
-final class MainActorGate {
-    private var continuation: CheckedContinuation<Void, Never>?
-    private var released = false
+/// Remote observation use case: yields each element of `updates` in order, then
+/// finishes — throwing when `shouldFail` is set (after emitting any updates).
+final class FakeObserveRemoteRecordsUseCase: ObserveRemoteRecordsUseCase, @unchecked Sendable {
+    var updates: [[SportRecord]] = []
+    var shouldFail = false
+    private(set) var callCount = 0
 
-    func wait() async {
-        if released { return }
-        await withCheckedContinuation { continuation = $0 }
+    /// Convenience for tests that only need a single emission.
+    var records: [SportRecord] {
+        get { updates.last ?? [] }
+        set { updates = [newValue] }
     }
 
-    func release() {
-        released = true
-        continuation?.resume()
-        continuation = nil
+    func callAsFunction() -> AsyncThrowingStream<[SportRecord], any Error> {
+        callCount += 1
+        let updates = self.updates
+        let shouldFail = self.shouldFail
+        return AsyncThrowingStream { continuation in
+            for update in updates { continuation.yield(update) }
+            continuation.finish(throwing: shouldFail ? AnyError() : nil)
+        }
     }
 }
 
@@ -129,7 +142,7 @@ final class FakeDeleteUseCase: DeleteSportRecordsUseCase {
     var errorToThrow: SportRecordsDeleteError?
     private(set) var deletedBatches: [[SportRecord]] = []
 
-    func execute(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
+    func callAsFunction(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
         deletedBatches.append(records)
         if let errorToThrow { throw errorToThrow }
     }
@@ -140,7 +153,7 @@ final class FakeSaveSportRecordUseCase: SaveSportRecordUseCase {
     var errorToThrow: (any Error)?
     private(set) var saved: [SportRecord] = []
 
-    func execute(_ record: SportRecord) async throws {
+    func callAsFunction(_ record: SportRecord) async throws {
         saved.append(record)
         if let errorToThrow { throw errorToThrow }
     }

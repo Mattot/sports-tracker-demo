@@ -28,7 +28,7 @@ public struct RecordsListView: View {
             ) {
                 Button(L10n.Common.ok, role: .cancel) {}
             } message: {
-                Text(message(for: viewModel.deleteErrors ?? []))
+                Text(message(for: viewModel.deleteErrors))
             }
             .task { await viewModel.load() }
             .task { await viewModel.observeConnectivity() }

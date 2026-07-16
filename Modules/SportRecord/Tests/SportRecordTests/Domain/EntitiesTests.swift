@@ -6,10 +6,13 @@ import Foundation
     #expect(Set(StorageType.allCases) == [.local, .remote])
 }
 
-@Test func fetchResultDefaultsToNoFailures() {
-    let result = SportRecordsFetchResult(records: [], failedStores: [])
-    #expect(result.records.isEmpty)
-    #expect(result.failedStores.isEmpty)
+@Test func observeRemoteErrorHasDistinctCases() {
+    let cases: Set<String> = [
+        "\(ObserveRemoteRecordsError.noData)",
+        "\(ObserveRemoteRecordsError.invalidData)",
+        "\(ObserveRemoteRecordsError.unknown)",
+    ]
+    #expect(cases.count == 3)
 }
 
 @Test func deleteErrorCarriesFailedStores() {

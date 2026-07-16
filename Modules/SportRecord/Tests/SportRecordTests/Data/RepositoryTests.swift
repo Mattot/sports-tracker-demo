@@ -8,7 +8,7 @@ private func makeSUT() -> (DefaultSportRecordRepository, local: FakeDataSource, 
     return (DefaultSportRecordRepository(local: local, remote: remote), local, remote)
 }
 
-// MARK: per-store fetch (coordination lives in the fetch use case, not here)
+// MARK: per-store reads (local one-shot, remote streamed)
 
 @Test func fetchLocalReturnsLocalStoreRecords() async throws {
     let (sut, local, remote) = makeSUT()
@@ -20,14 +20,15 @@ private func makeSUT() -> (DefaultSportRecordRepository, local: FakeDataSource, 
     #expect(records.map(\.name) == ["L"])
 }
 
-@Test func fetchRemoteReturnsRemoteStoreRecords() async throws {
+@Test func observeRemoteYieldsRemoteStoreRecords() async throws {
     let (sut, local, remote) = makeSUT()
     local.records = [Sample.record(name: "L", storage: .local)]
     remote.records = [Sample.record(name: "R", storage: .remote)]
 
-    let records = try await sut.fetchRemote()
+    var yielded: [SportRecord] = []
+    for try await records in sut.observeRemote() { yielded = records }
 
-    #expect(records.map(\.name) == ["R"])
+    #expect(yielded.map(\.name) == ["R"])
 }
 
 @Test func fetchLocalPropagatesError() async {
@@ -37,11 +38,13 @@ private func makeSUT() -> (DefaultSportRecordRepository, local: FakeDataSource, 
     await #expect(throws: (any Error).self) { try await sut.fetchLocal() }
 }
 
-@Test func fetchRemotePropagatesError() async {
+@Test func observeRemotePropagatesError() async {
     let (sut, _, remote) = makeSUT()
     remote.fetchError = AnyError()
 
-    await #expect(throws: (any Error).self) { try await sut.fetchRemote() }
+    await #expect(throws: (any Error).self) {
+        for try await _ in sut.observeRemote() {}
+    }
 }
 
 // MARK: delete routing + partial failure matrix

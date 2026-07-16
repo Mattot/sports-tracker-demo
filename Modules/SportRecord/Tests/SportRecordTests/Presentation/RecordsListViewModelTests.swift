@@ -4,96 +4,84 @@ import Foundation
 
 @MainActor
 private func makeSUT(
-    fetchResult: SportRecordsFetchResult = .init(records: [], failedStores: []),
+    localRecords: [SportRecord] = [],
+    localError: Error? = nil,
+    remoteUpdates: [[SportRecord]] = [],
+    remoteFails: Bool = false,
     isOnline: Bool = true
-) -> (RecordsListViewModel, fetch: FakeFetchUseCase, delete: FakeDeleteUseCase, monitor: FakeNetworkMonitor) {
-    let fetch = FakeFetchUseCase(); fetch.result = fetchResult
+) -> (
+    RecordsListViewModel,
+    fetchLocal: FakeFetchLocalRecordsUseCase,
+    observe: FakeObserveRemoteRecordsUseCase,
+    delete: FakeDeleteUseCase,
+    monitor: FakeNetworkMonitor
+) {
+    let fetchLocal = FakeFetchLocalRecordsUseCase()
+    fetchLocal.records = localRecords
+    fetchLocal.errorToThrow = localError
+    let observe = FakeObserveRemoteRecordsUseCase()
+    observe.updates = remoteUpdates
+    observe.shouldFail = remoteFails
     let delete = FakeDeleteUseCase()
     let monitor = FakeNetworkMonitor(isOnline: isOnline)
-    let sut = RecordsListViewModel(fetch: fetch, delete: delete, networkMonitor: monitor)
-    return (sut, fetch, delete, monitor)
+    let sut = RecordsListViewModel(observeRemote: observe, fetchLocal: fetchLocal, delete: delete, networkMonitor: monitor)
+    return (sut, fetchLocal, observe, delete, monitor)
 }
 
 // MARK: load / state mapping
 
 @Test @MainActor func loadWithRecordsBecomesLoaded() async {
     let record = Sample.record()
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [record], failedStores: []))
+    let (sut, _, _, _, _) = makeSUT(localRecords: [record])
     await sut.load()
     #expect(sut.content == .loaded([record]))
 }
 
-@Test @MainActor func loadWithNoRecordsAndNoFailureBecomesLoadedEmpty() async {
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [], failedStores: []))
+@Test @MainActor func loadWithNoRecordsBecomesLoadedEmpty() async {
+    let (sut, _, _, _, _) = makeSUT()
     await sut.load()
     #expect(sut.content == .loaded([]))
     #expect(sut.hasRecords == false)
 }
 
-@Test @MainActor func loadWithNoRecordsAndBothFailedBecomesFailed() async {
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [], failedStores: [.local, .remote]))
+@Test @MainActor func loadFailureBecomesFailed() async {
+    let (sut, _, _, _, _) = makeSUT(localError: AnyError())
     await sut.load()
     #expect(sut.content == .failed)
 }
 
-@Test @MainActor func remoteFailureWithLocalRecordsSetsRemoteUnavailable() async {
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [Sample.record()], failedStores: [.remote]))
+@Test @MainActor func retryReloadsLocalAfterFailure() async {
+    let (sut, fetchLocal, _, _, _) = makeSUT(localError: AnyError())
     await sut.load()
-    #expect(sut.remoteUnavailable)
+    #expect(sut.content == .failed)
+
+    fetchLocal.errorToThrow = nil
+    fetchLocal.records = [Sample.record()]
+    await sut.retry()
+
+    if case .loaded(let records) = sut.content { #expect(records.count == 1) } else { Issue.record("retry should recover to .loaded") }
+    #expect(fetchLocal.callCount == 2)
 }
 
-// MARK: progressive local-first load
+// MARK: local + remote merge / filter
 
-@Test @MainActor func loadAppliesLocalFirstYieldBeforeCombined() async {
-    let local = Sample.record(storage: .local)
-    let remote = Sample.record(storage: .remote)
-    let (sut, fetch, _, _) = makeSUT()
-    fetch.results = [
-        .init(records: [local], failedStores: []),            // first paint: local only
-        .init(records: [local, remote], failedStores: []),    // combined
-    ]
-    let gate = MainActorGate()
-    fetch.beforeFinalYield = { await gate.wait() }
-
-    let task = Task { await sut.load() }
-    // While the combined yield is gated, the local-first result is on screen.
-    for _ in 0..<1000 where sut.visibleRecords.count != 1 { await Task.yield() }
-    #expect(sut.visibleRecords.map(\.id) == [local.id])
-
-    gate.release()
-    await task.value
-    #expect(Set(sut.visibleRecords.map(\.id)) == [local.id, remote.id])
-}
-
-@Test @MainActor func refreshAppliesOnlyTheCombinedResult() async {
-    let local = Sample.record(storage: .local)
-    let remote = Sample.record(storage: .remote)
-    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [local, remote], failedStores: []))
-    await sut.load()   // both rows on screen
-
-    // A refresh must not flash back to local-only before the combined result lands.
-    fetch.results = [
-        .init(records: [local], failedStores: []),
-        .init(records: [local, remote], failedStores: []),
-    ]
-    let gate = MainActorGate()
-    fetch.beforeFinalYield = { await gate.wait() }
-    let task = Task { await sut.refresh() }
-    await Task.yield(); await Task.yield()
-    #expect(sut.visibleRecords.count == 2)   // still both while the local-first yield is in flight
-
-    gate.release()
-    await task.value
-    #expect(sut.visibleRecords.count == 2)
-}
-
-// MARK: filter
-
-@Test @MainActor func filterChangeDoesNotRefetch() async {
-    let local = Sample.record(storage: .local)
-    let remote = Sample.record(storage: .remote)
-    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [local, remote], failedStores: []))
+@Test @MainActor func visibleRecordsMergeLocalAndRemoteNewestFirst() async {
+    let local = Sample.record(name: "L", storage: .local, createdAt: .init(timeIntervalSince1970: 100))
+    let remote = Sample.record(name: "R", storage: .remote, createdAt: .init(timeIntervalSince1970: 200))
+    let (sut, _, _, _, _) = makeSUT(localRecords: [local], remoteUpdates: [[remote]])
     await sut.load()
+    await sut.observeData()
+
+    #expect(sut.visibleRecords.map(\.name) == ["R", "L"])
+    #expect(sut.hasRecords)
+}
+
+@Test @MainActor func filterShowsOnlyTheSelectedStore() async {
+    let local = Sample.record(storage: .local)
+    let remote = Sample.record(storage: .remote)
+    let (sut, _, _, _, _) = makeSUT(localRecords: [local], remoteUpdates: [[remote]])
+    await sut.load()
+    await sut.observeData()
 
     sut.filter = .local
     #expect(sut.visibleRecords == [local])
@@ -101,45 +89,79 @@ private func makeSUT(
     #expect(sut.visibleRecords == [remote])
     sut.filter = .all
     #expect(sut.visibleRecords.count == 2)
-
-    #expect(fetch.callCount == 1)   // never refetched on filter switch
 }
 
-@Test @MainActor func filterWithNoMatchesKeepsLoadedContent() async {
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [Sample.record(storage: .local)], failedStores: []))
+@Test @MainActor func filterChangeDoesNotRefetchLocal() async {
+    let (sut, fetchLocal, _, _, _) = makeSUT(localRecords: [Sample.record(storage: .local)])
     await sut.load()
+
+    sut.filter = .local
     sut.filter = .remote
-    #expect(sut.visibleRecords.isEmpty)
-    if case .loaded = sut.content {} else { Issue.record("content should stay .loaded") }
+    sut.filter = .all
+
+    #expect(fetchLocal.callCount == 1)
+}
+
+// MARK: remote observation
+
+@Test @MainActor func observeDataAppliesRemoteRecords() async {
+    let remote = Sample.record(storage: .remote)
+    let (sut, _, _, _, _) = makeSUT(remoteUpdates: [[remote]])
+    await sut.load()
+    await sut.observeData()
+
+    sut.filter = .remote
+    #expect(sut.visibleRecords == [remote])
+    #expect(sut.remoteUnavailable == false)
+}
+
+@Test @MainActor func observeDataFailureSetsRemoteUnavailable() async {
+    let (sut, _, _, _, _) = makeSUT(remoteFails: true)
+    await sut.observeData()
+    #expect(sut.remoteUnavailable)
+}
+
+@Test @MainActor func retryingObservationClearsRemoteUnavailableAndAppliesRecords() async {
+    let remote = Sample.record(storage: .remote)
+    let (sut, _, observe, _, _) = makeSUT(remoteFails: true)
+    await sut.observeData()
+    #expect(sut.remoteUnavailable)
+
+    // The banner's "try again" re-subscribes; the stream now succeeds.
+    observe.shouldFail = false
+    observe.updates = [[remote]]
+    await sut.observeData()
+
+    #expect(sut.remoteUnavailable == false)
+    sut.filter = .remote
+    #expect(sut.visibleRecords == [remote])
+    #expect(observe.callCount == 2)
 }
 
 // MARK: offline
 
 @Test @MainActor func observeConnectivityReflectsInitialOfflineState() async {
-    let (sut, _, _, _) = makeSUT(isOnline: false)
+    let (sut, _, _, _, _) = makeSUT(isOnline: false)
     let task = Task { await sut.observeConnectivity() }
     defer { task.cancel() }
-    // Initial reachability arrives via the monitor stream, so poll for it.
     for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
     #expect(sut.isOffline)
 }
 
-// MARK: refresh
-
-@Test @MainActor func refreshFailureKeepsExistingList() async {
-    let (sut, fetch, _, _) = makeSUT(fetchResult: .init(records: [Sample.record()], failedStores: []))
-    await sut.load()
-    // Next fetch: total failure.
-    fetch.result = .init(records: [], failedStores: [.local, .remote])
-    await sut.refresh()
-    if case .loaded(let r) = sut.content { #expect(r.count == 1) } else { Issue.record("list was blown away") }
+@Test @MainActor func observeConnectivityReflectsGoingOffline() async {
+    let (sut, _, _, _, monitor) = makeSUT(isOnline: true)
+    let task = Task { await sut.observeConnectivity() }
+    defer { task.cancel() }
+    monitor.setOnline(false)
+    for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
+    #expect(sut.isOffline)
 }
 
 // MARK: edit mode
 
 @Test @MainActor func cancelEditingClearsEditModeAndSelection() async {
     let a = Sample.record(storage: .local)
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [a], failedStores: []))
+    let (sut, _, _, _, _) = makeSUT(localRecords: [a])
     await sut.load()
     sut.isEditing = true
     sut.selection = [a.id]
@@ -154,77 +176,77 @@ private func makeSUT(
 
 @Test @MainActor func swipeDeleteLocalSuccessRemovesRow() async {
     let record = Sample.record(storage: .local)
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [record], failedStores: []))
+    let (sut, _, _, _, _) = makeSUT(localRecords: [record])
     await sut.load()
     await sut.delete(record)
     #expect(sut.content == .loaded([]))
-    #expect(sut.deleteError == nil)
+    #expect(sut.deleteErrors.isEmpty)
 }
 
 @Test @MainActor func swipeDeleteRemoteFailureKeepsRowAndSetsError() async {
     let record = Sample.record(storage: .remote)
-    let (sut, _, delete, _) = makeSUT(fetchResult: .init(records: [record], failedStores: []))
+    let (sut, _, _, delete, _) = makeSUT(remoteUpdates: [[record]])
     await sut.load()
+    await sut.observeData()
     delete.errorToThrow = SportRecordsDeleteError(failedStores: [.remote])
+
     await sut.delete(record)
-    if case .loaded(let r) = sut.content { #expect(r.count == 1) } else { Issue.record("row removed on failure") }
-    #expect(sut.deleteError != nil)
+
+    #expect(sut.visibleRecords.map(\.id) == [record.id])   // row stays
+    #expect(sut.deleteErrors == [.remote])
 }
 
 // MARK: batch delete
 
-@Test @MainActor func batchDeleteSuccessClearsSelectionAndExitsEdit() async {
+@Test @MainActor func batchDeleteSuccessRemovesAllAndExitsEdit() async {
     let a = Sample.record(storage: .local)
     let b = Sample.record(storage: .remote)
-    let (sut, _, _, _) = makeSUT(fetchResult: .init(records: [a, b], failedStores: []))
+    let (sut, _, _, _, _) = makeSUT(localRecords: [a], remoteUpdates: [[b]])
     await sut.load()
+    await sut.observeData()
     sut.isEditing = true
     sut.selection = [a.id, b.id]
+
     await sut.deleteSelected()
-    #expect(sut.content == .loaded([]))
+
+    #expect(sut.visibleRecords.isEmpty)
     #expect(sut.selection.isEmpty)
     #expect(sut.isEditing == false)
+    #expect(sut.deleteErrors.isEmpty)
 }
 
 @Test @MainActor func batchDeleteMixedRemoteFailsRemovesLocalKeepsRemote() async {
     let a = Sample.record(storage: .local)
     let b = Sample.record(storage: .remote)
-    let (sut, _, delete, _) = makeSUT(fetchResult: .init(records: [a, b], failedStores: []))
+    let (sut, _, _, delete, _) = makeSUT(localRecords: [a], remoteUpdates: [[b]])
     await sut.load()
+    await sut.observeData()
     sut.isEditing = true
     sut.selection = [a.id, b.id]
     delete.errorToThrow = SportRecordsDeleteError(failedStores: [.remote])
+
     await sut.deleteSelected()
 
-    if case .loaded(let r) = sut.content { #expect(r.map(\.id) == [b.id]) } else { Issue.record("unexpected content") }
-    #expect(sut.selection == [b.id])   // reduced to failed rows
-    #expect(sut.isEditing)             // stays in edit mode
-    #expect(sut.deleteError != nil)
+    #expect(sut.visibleRecords.map(\.id) == [b.id])   // local committed, remote kept
+    #expect(sut.deleteErrors == [.remote])
+    #expect(sut.isEditing == false)                   // edit mode exits regardless
+    #expect(sut.selection.isEmpty)
 }
 
-@Test @MainActor func batchDeleteBothFailKeepsEverythingSelected() async {
+@Test @MainActor func batchDeleteBothFailKeepsEveryRecord() async {
     let a = Sample.record(storage: .local)
     let b = Sample.record(storage: .remote)
-    let (sut, _, delete, _) = makeSUT(fetchResult: .init(records: [a, b], failedStores: []))
+    let (sut, _, _, delete, _) = makeSUT(localRecords: [a], remoteUpdates: [[b]])
     await sut.load()
+    await sut.observeData()
     sut.isEditing = true
     sut.selection = [a.id, b.id]
     delete.errorToThrow = SportRecordsDeleteError(failedStores: [.local, .remote])
+
     await sut.deleteSelected()
 
-    if case .loaded(let r) = sut.content { #expect(r.count == 2) } else { Issue.record("rows removed") }
-    #expect(sut.selection == [a.id, b.id])
-    #expect(sut.isEditing)
-}
-
-// MARK: network observation
-
-@Test @MainActor func observeConnectivityReflectsGoingOffline() async {
-    let (sut, _, _, monitor) = makeSUT(isOnline: true)
-    let task = Task { await sut.observeConnectivity() }
-    defer { task.cancel() }
-    monitor.setOnline(false)
-    // Both the initial online and the offline value are buffered; poll until offline.
-    for _ in 0..<1000 where sut.isOffline == false { await Task.yield() }
-    #expect(sut.isOffline)
+    #expect(sut.visibleRecords.count == 2)
+    #expect(sut.deleteErrors == [.local, .remote])
+    #expect(sut.isEditing == false)
+    #expect(sut.selection.isEmpty)
 }

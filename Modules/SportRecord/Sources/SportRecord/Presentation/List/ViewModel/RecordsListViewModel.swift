@@ -50,11 +50,12 @@ public final class RecordsListViewModel {
     public var hasRecords: Bool { !allRecords.isEmpty }
 
     public var visibleRecords: [SportRecord] {
-        let records = switch filter {
-        case .all: allRecords
-        case .local: localRecords
-        case .remote: remoteRecords
-        }
+        let records =
+            switch filter {
+            case .all: allRecords
+            case .local: localRecords
+            case .remote: remoteRecords
+            }
         return records.filter { !pendingDeletes.contains($0.id) }
     }
 
