@@ -50,6 +50,7 @@ enum L10n {
         static var edit: String { str("common.edit") }
         static var tryAgain: String { str("common.tryAgain") }
         static var save: String { str("common.save") }
+        static var loading: String { str("common.loading") }
     }
 
     enum AddRecord {

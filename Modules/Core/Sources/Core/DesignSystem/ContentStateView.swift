@@ -22,17 +22,20 @@ public struct ContentStateView: View {
 
     private let state: State
     private let action: Action?
+    /// VoiceOver label for the loading spinner. `nil` keeps the system default
+    /// ("In progress"); Core stays localization-free, so callers pass a string.
+    private let loadingLabel: String?
 
-    public init(state: State, action: Action? = nil) {
+    public init(state: State, action: Action? = nil, loadingLabel: String? = nil) {
         self.state = state
         self.action = action
+        self.loadingLabel = loadingLabel
     }
 
     public var body: some View {
         switch state {
         case .loading:
-            ProgressView()
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            loadingView
         case let .empty(title, message):
             ContentUnavailableView {
                 Label(title, systemImage: "figure.run")
@@ -49,6 +52,16 @@ public struct ContentStateView: View {
             } actions: {
                 actionButton
             }
+        }
+    }
+
+    @ViewBuilder
+    private var loadingView: some View {
+        let spinner = ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
+        if let loadingLabel {
+            spinner.accessibilityLabel(loadingLabel)
+        } else {
+            spinner  // keep the system's localized "In progress"
         }
     }
 

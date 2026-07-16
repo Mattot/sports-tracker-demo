@@ -15,4 +15,13 @@ extension StorageType {
         case .remote: L10n.Storage.remote
         }
     }
+
+    /// A shape cue paired with the colour so the two stores stay distinguishable
+    /// under colour-vision deficiency (blue vs purple sit close for some CVD types).
+    var symbolName: String {
+        switch self {
+        case .local: "internaldrive"
+        case .remote: "cloud"
+        }
+    }
 }

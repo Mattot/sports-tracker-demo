@@ -26,10 +26,12 @@ public struct AddRecordView: View {
                     .focused($focusedField, equals: .name)
                     .submitLabel(.next)
                     .onSubmit { focusedField = .location }
+                    .accessibilityLabel(L10n.AddRecord.namePlaceholder)
                 TextField(L10n.AddRecord.locationPlaceholder, text: $viewModel.location)
                     .focused($focusedField, equals: .location)
                     .submitLabel(.done)
                     .onSubmit { focusedField = nil }
+                    .accessibilityLabel(L10n.AddRecord.locationPlaceholder)
             }
             Section(L10n.AddRecord.sectionDuration) {
                 DurationPicker(

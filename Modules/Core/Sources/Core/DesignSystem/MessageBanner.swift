@@ -49,17 +49,26 @@ public struct MessageBanner: View {
     public var body: some View {
         HStack(spacing: 8) {
             Image(systemName: style.systemImage)
+                .foregroundStyle(style.tint)
+                .accessibilityHidden(true)
+
             Text(text)
                 .font(.footnote.weight(.medium))
+                .foregroundStyle(.primary)
+
             Spacer(minLength: 0)
+
             if let action {
                 Button(action.title, action: action.handler)
+                    .font(.footnote.weight(.semibold))
+                    .buttonStyle(.borderedProminent)
+                    .controlSize(.small)
+                    .tint(style.tint)
             }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(style.tint.opacity(0.15))
-        .foregroundStyle(style.tint)
     }
 }

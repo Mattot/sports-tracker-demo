@@ -10,6 +10,8 @@ public struct RecordsListView: View {
     // used to reattach data observation on view load or if previously failed
     @State private var triggerObserveData = true
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     public init(viewModel: RecordsListViewModel, onAddRecord: @escaping (@escaping () -> Void) -> Void) {
         _viewModel = State(initialValue: viewModel)
         self.onAddRecord = onAddRecord
@@ -43,10 +45,9 @@ public struct RecordsListView: View {
     private var content: some View {
         VStack(spacing: 0) {
             banner
-
             switch viewModel.content {
             case .loading:
-                ContentStateView(state: .loading)
+                ContentStateView(state: .loading, loadingLabel: L10n.Common.loading)
             case .failed:
                 ContentStateView(
                     state: .failed(title: L10n.List.loadErrorTitle, message: L10n.List.loadErrorMessage),
@@ -61,8 +62,8 @@ public struct RecordsListView: View {
                 }
             }
         }
-        .animation(.default, value: viewModel.remoteUnavailable)
-        .animation(.default, value: viewModel.isOffline)
+        .animation(reduceMotion ? nil : .default, value: viewModel.remoteUnavailable)
+        .animation(reduceMotion ? nil : .default, value: viewModel.isOffline)
     }
 
     private var recordsList: some View {
@@ -82,7 +83,7 @@ public struct RecordsListView: View {
         .listStyle(.plain)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .environment(\.editMode, .constant(viewModel.isEditing ? .active : .inactive))
-        .animation(.default, value: viewModel.visibleRecords)
+        .animation(reduceMotion ? nil : .default, value: viewModel.visibleRecords)
     }
 
     private var filterPicker: some View {
