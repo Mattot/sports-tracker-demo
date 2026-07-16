@@ -105,7 +105,7 @@ FactoryKit registrations live in `SportsTracker/SportsTracker/DI/Container+Sport
 
 | Dependency | Scope | Note |
 |---|---|---|
-| `NetworkMonitor` | `.singleton` | one `NWPathMonitor` for the app's life |
+| `NetworkMonitor` | `.singleton` | one shared, **stateless** gateway — each subscription to `updates` starts and cancels its own `NWPathMonitor`, scoped to the observing task |
 | `ModelContainer` | `.singleton` | SwiftData container, `SportRecordModel` schema |
 | `LocalSportRecordDataSource` / `RemoteSportRecordDataSource` | `.singleton` | stateless gateways, built via the package's `SportRecordStorage` composition seam |
 | `SportRecordRepository` | `.singleton` | holds both data sources |
