@@ -75,10 +75,9 @@ The navigation infrastructure (router, flow view, screen factory) lives entirely
 ## Beyond the Assignment
 
 - **Offline awareness** — an `NWPathMonitor`-backed banner ("You're offline — showing local records").
-- **Partial-failure-aware fetch** — the stores are read concurrently; one failing store never hides the other store's records, and the failure drives an in-list banner instead.
-- **Local-first progressive loading** — local records paint immediately; the merged local + remote result follows.
-- **Partial-failure-aware delete** — batch deletes are routed per store and commit independently; a typed error reports exactly which store failed, and only those rows are kept.
-- **Pull-to-refresh** on every segment of the list, including empty ones, plus an automatic refresh when the app returns to the foreground.
+- **Real-time remote sync** — the Firestore store is observed through a live snapshot listener, so records added or removed elsewhere (another device, the Firestore console) appear in the list without a manual refresh.
+- **Resilient reads** — local records paint immediately from SwiftData; if the remote listener fails, the local list still shows and an error banner offers a one-tap "Try again" that re-subscribes.
+- **Partial-failure-aware delete** — batch deletes are routed per store and commit independently, optimistically hiding rows as they go; a typed error reports exactly which store failed, and only those rows survive.
 - **Edit mode** with multi-select and confirmed batch delete; swipe-to-delete outside edit mode.
 - **Per-segment empty states** and a global "add your first activity" empty state.
 - **Unit tests across all layers** (Swift Testing) — data sources run against an in-memory SwiftData container; deletes are covered by a full local/remote combination matrix.

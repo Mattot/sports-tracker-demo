@@ -22,7 +22,7 @@ Dependencies point one way — `App → SportRecord → Core` — and are never 
 
 The dependency rule inside the feature: **Presentation → Domain ← Data**. Domain imports neither SwiftData nor Firebase; Data implements Domain's protocols; Presentation consumes Domain's use cases.
 
-- **Domain** — `Sendable` value-type entities (`SportRecord`, `StorageType`, `SportRecordsFetchResult`, `SportRecordsDeleteError`), the `SportRecordRepository` protocol, and one use case per operation (`Fetch`, `Save`, `Delete`), each a protocol plus a default implementation.
+- **Domain** — `Sendable` value-type entities (`SportRecord`, `StorageType`, `ObserveRemoteRecordsError`, `SportRecordsDeleteError`), the `SportRecordRepository` protocol, and one use case per operation (`FetchLocalRecords`, `ObserveRemoteRecords`, `Save`, `Delete`), each a protocol plus a default implementation (called via `callAsFunction`).
 - **Data** — per-store data sources behind protocols (`LocalSportRecordDataSource` implemented by the SwiftData `@ModelActor` source; `RemoteSportRecordDataSource` implemented by the Firestore source) and `DefaultSportRecordRepository`.
 - **Presentation** — `@MainActor @Observable` ViewModels (constructor-injected, no property wrappers coupling them to DI) and thin SwiftUI views that bind and delegate.
 
@@ -76,23 +76,22 @@ User-facing strings live only in `Presentation/`, are keyed in the catalog, and 
 
 ## Data flow
 
-### Fetch — local-first, partial-failure aware
+### Reads — local one-shot, remote observed live
 
-`DefaultFetchSportRecordsUseCase.execute()` returns an `AsyncStream<SportRecordsFetchResult>` and owns the multi-store coordination:
+The two stores are read through **two independent use cases**, and the ViewModel keeps their results in separate state:
 
-1. Both stores are read concurrently through the repository's per-store reads (`fetchLocal()` / `fetchRemote()`).
-2. If local records arrive (and there are any), they are yielded immediately — the list paints without waiting for a possibly slow or offline remote.
-3. The stream always ends with the combined result: both stores merged, sorted by `createdAt` descending, with every store that threw collected in `failedStores` instead of failing the whole fetch.
+- **`FetchLocalRecordsUseCase`** is a one-shot `async throws -> [SportRecord]` read of the SwiftData store, run on `load()` (and again after a save, via the sheet's `onSaved` callback). Its result is the ViewModel's `content` — `RecordsContentState` (`loading` / `loaded([SportRecord])` / `failed` — no separate empty case; `loaded([])` covers it). Local failure is the only thing that drives `failed`.
+- **`ObserveRemoteRecordsUseCase`** returns an `AsyncThrowingStream<[SportRecord], Error>` backed by a live Firestore snapshot listener, driven from the view's `.task(id:)`. Each snapshot replaces the ViewModel's `remoteRecords`, so remote edits (from another device or the Firestore console) land in real time with no refetch. A stream failure is mapped to a typed `ObserveRemoteRecordsError` (`noData` / `invalidData` / `unknown`) and flips `remoteUnavailable`; a "Try again" banner action re-subscribes by toggling the `.task(id:)` trigger.
 
-The ViewModel folds the stream into `RecordsContentState` (`loading` / `loaded([SportRecord])` / `failed` — no separate empty case; `loaded([])` covers it) and derives the banner from two orthogonal signals: its `isOffline` flag (fed by `NetworkMonitor.updates`) and `failedStores.contains(.remote)`. `failed` is reached only when there is nothing to show and at least one store failed. The **All | Local | Remote** filter is a pure in-memory derivation — switching segments never refetches.
+`visibleRecords` merges local + remote (sorted by `createdAt` descending) and applies the **All | Local | Remote** filter as a pure in-memory derivation — switching segments never refetches. The banner is derived from two orthogonal signals: `isOffline` (fed by `NetworkMonitor.updates`) and `remoteUnavailable`.
 
 ### Save
 
-`SaveSportRecordUseCase` passes the new record to the repository, which routes it to the data source matching `record.storageType`. The add sheet reports success through its `onSaved` callback, and the list reloads.
+`SaveSportRecordUseCase` passes the new record to the repository, which routes it to the data source matching `record.storageType`. The add sheet reports success through its `onSaved` callback, which reloads the **local** store; a remote save appears on its own through the live snapshot listener.
 
 ### Delete — per-store routing, independent commits
 
-The repository groups the records by `storageType` and runs each non-empty group's delete concurrently. Each store commits independently — one store failing does not roll back the other. Failures surface as the **typed throw** `SportRecordsDeleteError` (Swift 6 `throws(...)`) naming exactly the failed store(s), so the ViewModel removes only the rows that were actually deleted, keeps the failed ones selected, and shows a store-specific message. (The current Firestore implementation commits remote deletes offline-first and fire-and-forget, so a server-side remote failure surfaces in logs rather than through this throw.)
+The repository groups the records by `storageType` and runs each non-empty group's delete concurrently. Each store commits independently — one store failing does not roll back the other. Deletes are **optimistic**: the affected ids go into `pendingDeletes` and vanish from `visibleRecords` immediately. Failures surface as the **typed throw** `SportRecordsDeleteError` (Swift 6 `throws(...)`) naming exactly the failed store(s), so the ViewModel removes only the rows that were actually deleted and exposes `deleteErrors: Set<StorageType>`; the view maps that set to a store-specific alert message. A batch delete leaves edit mode immediately (selection cleared) regardless of the outcome. (The current Firestore implementation commits remote deletes offline-first and fire-and-forget, so a server-side remote failure surfaces in logs rather than through this throw.)
 
 ## Navigation
 
@@ -110,7 +109,7 @@ FactoryKit registrations live in `SportsTracker/SportsTracker/DI/Container+Sport
 | `ModelContainer` | `.singleton` | SwiftData container, `SportRecordModel` schema |
 | `LocalSportRecordDataSource` / `RemoteSportRecordDataSource` | `.singleton` | stateless gateways, built via the package's `SportRecordStorage` composition seam |
 | `SportRecordRepository` | `.singleton` | holds both data sources |
-| `Fetch` / `Save` / `Delete` use cases | `.cached` | stateless pass-throughs |
+| `FetchLocalRecords` / `ObserveRemoteRecords` / `Save` / `Delete` use cases | `.cached` | stateless pass-throughs |
 
 ViewModels are deliberately **not** container-managed: `ScreenFactory` constructs a fresh ViewModel per screen and passes dependencies through the initializer. `FirebaseApp.configure()` runs in the app's `init`, before the container is first touched.
 
@@ -127,9 +126,9 @@ Swift Testing (`import Testing`, `@Test`, `#expect`) — not XCTest.
 
 - **Fakes over mocks:** hand-written fakes for the data sources, use cases, and `NetworkMonitor` live in `Tests/SportRecordTests/Support/Fakes.swift`.
 - **Local data source** is tested against a real **in-memory `ModelContainer`** (round-trips, subset deletes, missing-id no-ops).
-- **Repository** tests assert per-store routing and the thrown `failedStores` for every local/remote combination.
-- **ViewModel** tests cover state transitions, local-first streaming (local yield before combined result), filter behaviour (no refetch), refresh keeping stale data on failure, and the full batch-delete partial-failure matrix.
-- The remote data source is faked at its protocol; live Firestore is out of unit-test scope.
+- **Repository** tests assert per-store routing (local one-shot `fetchLocal()`, remote `observeRemote()` stream) and the thrown `failedStores` for every local/remote delete combination.
+- **ViewModel** tests cover state transitions, the local-load vs live-remote-observation split, filter behaviour (no refetch), remote-unavailability plus retry re-subscription, `deleteErrors`, and the batch-delete partial-failure matrix (including the immediate edit-mode exit).
+- The remote data source is faked at its protocol (`observeRecords()` yields a stream); live Firestore — including the snapshot-listener wiring — is out of unit-test scope.
 
 Run the suites from each package directory:
 
