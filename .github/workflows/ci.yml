@@ -37,3 +37,6 @@ jobs:
       # default iPhone 16 Pro/OS 18.5 destination, which isn't available here.
       - name: SportRecord package tests
         run: make test-sportrecord TEST_DEST='platform=iOS Simulator,name=iPhone 17,OS=26.5'
+
+      - name: App target tests
+        run: make test-app APP_TEST_DEST='platform=iOS Simulator,name=iPhone 17,OS=26.5'
