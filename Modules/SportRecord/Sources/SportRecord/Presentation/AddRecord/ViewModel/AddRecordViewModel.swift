@@ -45,7 +45,7 @@ public final class AddRecordViewModel {
             createdAt: Date()
         )
         do {
-            try await saveUseCase.execute(record)
+            try await saveUseCase(record)
             return true
         } catch {
             saveError = message(for: storageType)

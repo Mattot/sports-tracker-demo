@@ -9,7 +9,7 @@ public protocol LocalSportRecordDataSource: Sendable {
 
 /// Single-store gateway for the remote backend.
 public protocol RemoteSportRecordDataSource: Sendable {
-    func fetch() async throws -> [SportRecord]
+    func observeRecords() -> AsyncThrowingStream<[SportRecord], Error>
     func insert(_ record: SportRecord) async throws
     func delete(ids: [UUID]) async throws
 }

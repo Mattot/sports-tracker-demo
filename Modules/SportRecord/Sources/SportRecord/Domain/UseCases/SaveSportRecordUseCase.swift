@@ -1,5 +1,5 @@
 public protocol SaveSportRecordUseCase: Sendable {
-    func execute(_ record: SportRecord) async throws
+    func callAsFunction(_ record: SportRecord) async throws
 }
 
 public struct DefaultSaveSportRecordUseCase: SaveSportRecordUseCase {
@@ -9,7 +9,7 @@ public struct DefaultSaveSportRecordUseCase: SaveSportRecordUseCase {
         self.repository = repository
     }
 
-    public func execute(_ record: SportRecord) async throws {
+    public func callAsFunction(_ record: SportRecord) async throws {
         try await repository.save(record)
     }
 }

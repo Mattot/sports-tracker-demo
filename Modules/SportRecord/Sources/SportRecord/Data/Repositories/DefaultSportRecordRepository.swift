@@ -14,8 +14,8 @@ public struct DefaultSportRecordRepository: SportRecordRepository {
         try await local.fetch()
     }
 
-    public func fetchRemote() async throws -> [SportRecord] {
-        try await remote.fetch()
+    public func observeRemote() -> AsyncThrowingStream<[SportRecord], Error> {
+        remote.observeRecords()
     }
 
     public func save(_ record: SportRecord) async throws {

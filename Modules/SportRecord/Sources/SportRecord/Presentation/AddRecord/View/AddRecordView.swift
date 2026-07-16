@@ -5,6 +5,7 @@ public struct AddRecordView: View {
 
     @State private var viewModel: AddRecordViewModel
     @FocusState private var focusedField: Field?
+
     private let onSaved: () -> Void
     private let onCancel: () -> Void
 
@@ -54,13 +55,16 @@ public struct AddRecordView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
-                Button(L10n.Common.cancel) { onCancel() }
+                Button(L10n.Common.cancel) {
+                    onCancel()
+                }
+                .disabled(viewModel.isSaving)
             }
             ToolbarItem(placement: .confirmationAction) {
                 Button(L10n.Common.save) {
                     Task { if await viewModel.save() { onSaved() } }
                 }
-                .disabled(!viewModel.canSave)
+                .disabled(!viewModel.canSave || viewModel.isSaving)
             }
         }
         .alert(

@@ -13,7 +13,8 @@ struct ScreenFactory {
     func recordsList() -> some View {
         RecordsListView(
             viewModel: RecordsListViewModel(
-                fetch: container.fetchSportRecordsUseCase(),
+                observeRemote: container.observeRemoteRecordsUseCase(),
+                fetchLocal: container.fetchLocalRecordsUseCase(),
                 delete: container.deleteSportRecordsUseCase(),
                 networkMonitor: container.networkMonitor()
             ),

@@ -5,7 +5,7 @@ struct SportRecordRow: View {
 
     private var formattedDuration: String {
         Duration.seconds(record.duration)
-            .formatted(.units(allowed: [.hours, .minutes], width: .abbreviated))
+            .formatted(.units(allowed: [.hours, .minutes, .seconds], width: .narrow))
     }
 
     var body: some View {

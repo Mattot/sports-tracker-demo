@@ -9,8 +9,8 @@ struct AppFlowView: View {
     var body: some View {
         NavigationStack(path: $router.path) {
             factory.recordsList()
-            // No `.navigationDestination` yet: `Route` is uninhabited (no pushes
-            // in iteration 1). The first push adds one `Route` case and one
+            // No `.navigationDestination` yet: `Route` is uninhabited (added as showcase
+            // for future project expansion). The first push adds one `Route` case and one
             // `.navigationDestination(for: Route.self)` branch here.
         }
         .sheet(item: $router.sheet) { sheet in

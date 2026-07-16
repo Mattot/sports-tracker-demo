@@ -10,20 +10,41 @@ struct FirestoreSportRecordDataSource: RemoteSportRecordDataSource {
         Firestore.firestore().collection(collectionName)
     }
 
-    func fetch() async throws -> [SportRecord] {
-        do {
-            let snapshot =
-                try await collection
-                .order(by: "createdAt", descending: true)
-                .getDocuments()
-            return try snapshot.documents.compactMap { document in
-                guard let id = UUID(uuidString: document.documentID) else { return nil }
-                let dto = try document.data(as: SportRecordDTO.self)
-                return dto.toDomain(id: id)
+    func observeRecords() -> AsyncThrowingStream<[SportRecord], Error> {
+        AsyncThrowingStream([SportRecord].self) { continuation in
+            let orderedCollection = collection.order(by: "createdAt", descending: true)
+            // Due to Objective-C protocol under the hood - Swift 6 compiler won't allow access to listener
+            // due to missing Sendable conformance.
+            // Since available resources states that ListenerRegistration object is thread-safe
+            // we make an exception to mark it as nonisolate(unsafe) to properly remove listener on termination.
+            nonisolated(unsafe) let listener = orderedCollection.addSnapshotListener { snapshot, error in
+                if let error {
+                    Loggers.data.error("Firestore fetch failed: \(error.localizedDescription, privacy: .public)")
+                    continuation.finish(throwing: ObserveRemoteRecordsError.unknown)
+                    return
+                }
+                guard let snapshot else {
+                    Loggers.data.error("Firestore fetch failed: no snapshot")
+                    continuation.finish(throwing: ObserveRemoteRecordsError.noData)
+                    return
+                }
+                do {
+                    let records: [SportRecord] = try snapshot.documents.compactMap { document in
+                        guard let id = UUID(uuidString: document.documentID) else { return nil }
+                        let dto = try document.data(as: SportRecordDTO.self)
+                        return dto.toDomain(id: id)
+                    }
+                    continuation.yield(records)
+                } catch {
+                    Loggers.data.error("Firestore fetch failed: \(error.localizedDescription, privacy: .public)")
+                    continuation.finish(throwing: ObserveRemoteRecordsError.invalidData)
+                }
             }
-        } catch {
-            Loggers.data.error("Firestore fetch failed: \(error.localizedDescription, privacy: .public)")
-            throw error
+            Loggers.connectivity.debug("Firestore listener attached")
+            continuation.onTermination = { _ in
+                listener.remove()
+                Loggers.connectivity.debug("Firestore listener cancelled")
+            }
         }
     }
 

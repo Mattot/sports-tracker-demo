@@ -35,15 +35,19 @@ extension Container {
         }.singleton
     }
 
-    var fetchSportRecordsUseCase: Factory<FetchSportRecordsUseCase> {
-        self { DefaultFetchSportRecordsUseCase(repository: self.sportRecordRepository()) }.cached
-    }
-
     var deleteSportRecordsUseCase: Factory<DeleteSportRecordsUseCase> {
         self { DefaultDeleteSportRecordsUseCase(repository: self.sportRecordRepository()) }.cached
     }
 
     var saveSportRecordUseCase: Factory<SaveSportRecordUseCase> {
         self { DefaultSaveSportRecordUseCase(repository: self.sportRecordRepository()) }.cached
+    }
+
+    var fetchLocalRecordsUseCase: Factory<FetchLocalRecordsUseCase> {
+        self { DefaultFetchLocalRecordsUseCase(repository: self.sportRecordRepository()) }.cached
+    }
+
+    var observeRemoteRecordsUseCase: Factory<ObserveRemoteRecordsUseCase> {
+        self { DefaultObserveRemoteRecordsUseCase(repository: self.sportRecordRepository()) }.cached
     }
 }

@@ -1,5 +1,5 @@
 public protocol DeleteSportRecordsUseCase: Sendable {
-    func execute(_ records: [SportRecord]) async throws(SportRecordsDeleteError)
+    func callAsFunction(_ records: [SportRecord]) async throws(SportRecordsDeleteError)
 }
 
 public struct DefaultDeleteSportRecordsUseCase: DeleteSportRecordsUseCase {
@@ -9,7 +9,7 @@ public struct DefaultDeleteSportRecordsUseCase: DeleteSportRecordsUseCase {
         self.repository = repository
     }
 
-    public func execute(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
+    public func callAsFunction(_ records: [SportRecord]) async throws(SportRecordsDeleteError) {
         try await repository.delete(records)
     }
 }

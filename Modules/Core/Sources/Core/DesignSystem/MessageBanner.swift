@@ -22,12 +22,28 @@ public struct MessageBanner: View {
         }
     }
 
+    public struct Action {
+        public let title: String
+        public let handler: () -> Void
+
+        public init(title: String, handler: @escaping () -> Void) {
+            self.title = title
+            self.handler = handler
+        }
+    }
+
     private let text: String
     private let style: Style
+    private let action: Action?
 
-    public init(_ text: String, style: Style = .warning) {
+    public init(
+        _ text: String,
+        style: Style = .warning,
+        action: Action? = nil
+    ) {
         self.text = text
         self.style = style
+        self.action = action
     }
 
     public var body: some View {
@@ -36,6 +52,9 @@ public struct MessageBanner: View {
             Text(text)
                 .font(.footnote.weight(.medium))
             Spacer(minLength: 0)
+            if let action {
+                Button(action.title, action: action.handler)
+            }
         }
         .padding(.horizontal)
         .padding(.vertical, 8)

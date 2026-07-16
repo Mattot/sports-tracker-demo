@@ -35,7 +35,7 @@ public struct ContentStateView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         case let .empty(title, message):
             ContentUnavailableView {
-                Label(title, systemImage: "tray")
+                Label(title, systemImage: "figure.run")
             } description: {
                 Text(message)
             } actions: {
